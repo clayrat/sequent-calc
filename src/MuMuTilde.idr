@@ -91,77 +91,10 @@ biorth x k = k x
 --  reaR : TyR g d a -> envR g -> envL d -> orth (intCV a)
 --  reaL : TyL g d a -> envR g -> envL d -> orth (intTV a)
 
-namespace Rea1
--- Version (1): call-by-name
--- It corresponds to this version:
--- || A → B ||_E = | A | × || B ||
--- | A × B |_V  = | A | × | B |
+-- (see Rea1 - Rea4)
 
-  mutual
-    intCN : (n : NegTypes) -> Type
-    intCN (To a b) = (intT a, intC b)
-  
-    intTP : (p : PosTypes) -> Type
-    intTP (Prod a b) = (intT a, intT b)
-  
-    intCV : Types -> Type 
-    intCV (Neg n) = intCN n
-    intCV (Pos p) = orth (intTP p)
-  
-    intTV : Types -> Type 
-    intTV (Pos p) = intTP p
-    intTV (Neg n) = orth (intCN n)
-  
-    intT : Types -> Type
-    intT t = orth (intCV t)
-  
-    intC : Types -> Type
-    intC t = orth (intTV t)
-  
-  -- We witness the (usual) inclusions between orthogonals:
-  
-  biorthC : intCV t -> intC t
-  biorthC {t=Pos _} = id
-  biorthC {t=Neg _} = biorth
-  
-  biorthT : intTV t -> intT t
-  biorthT {t=Pos _} = biorth
-  biorthT {t=Neg _} = id
-  
-  -- And a cut (ie. function application) whose behavior depends on the polarity:
-  
-  cut : intT t -> intC t -> Pole
-  cut {t=Pos _} s e = s e
-  cut {t=Neg _} s e = e s
-  
-  envR : (g : Context) -> Type
-  envR g = intCtxt g intT
-  
-  envL : (d : Context) -> Type
-  envL d = intCtxt d intC
 
-  mutual 
-    reaR : (g, d : Context) -> (a : Types) -> (h : TyR g d a) -> (p : envR g) -> (s : envL d) -> intT a
-    reaR g d a                (TyVarR prf)  p s = lookup p prf
-    reaR g d (Neg (To a b))   (TyAppR t)    p s = \(u,e) => 
-    -- This suggests that: <λx.t|u.e> → <t[u/x]|e> for any u, this is call-by-name fashion
-      let p2 = extInt p u in
-      cut (reaR (extCtxt g a) d b t p2 s) e
-    reaR g d a                (TyMuR c)     p s = \ia => 
-      let s2 = extInt s $ biorthC ia in
-      rea g (extCtxt d a) c p s2
-    reaR g d (Pos (Prod a b)) (TyPairR x y) p s = \pa => pa (reaR g d a x p s, reaR g d b y p s)
+-- We can also imagine many different ways to define truth and falsity values
+-- by mixing the previous definitions. We give a few more definitions to illustrate this.
 
-    reaL : (g, d : Context) -> (a : Types) -> (h : TyL g d a) -> (p : envR g) -> (s : envL d) -> intC a
-    reaL g d a                (TyVarL prf)  p s = lookup s prf
-    reaL g d (Neg (To a b))   (TyAppL u pi) p s = \t => t (reaR g d a u p s, reaL g d b pi p s)
-    reaL g d a                (TyMuL c)     p s = \ia => 
-      let p2 = extInt p $ biorthT ia in
-      rea (extCtxt g a) d c p2 s
-    reaL g d (Pos (Prod a b)) (TyPairL c)   p s = \(r,q) =>
-    -- This suggests that: <(t,u)|µ~(x,y).c> → c[t/x,u/x] for any t,u, this is again call-by-name fashion
-      let p2 = extInt {g = extCtxt g a} {t = b} (extInt p r) q in
-      rea (extCtxt (extCtxt g a) b) d c p2 s
-
-    rea : (g, d : Context) -> (h : Ty g d) -> (p : envR g) -> (s : envL d) -> Pole
-    rea g d (TyCut {a} t pi) p s = cut (reaR g d a t p s) (reaL g d a pi p s)
+-- (see Rea1bis - Rea4bis)

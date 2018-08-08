@@ -3,5 +3,12 @@ package sequentcalc
 sourcedir = src
 
 modules = MuMuTilde
+        , MuMuTilde.Rea1
+        , MuMuTilde.Rea2
+        , MuMuTilde.Rea3
+        , MuMuTilde.Rea4
+        , MuMuTilde.Rea1bis
+        , MuMuTilde.Rea2bis
+        , MuMuTilde.Rea4bis
 
 opts = "-p contrib"
