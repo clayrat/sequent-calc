@@ -1,0 +1,7 @@
+package sequentcalc
+
+sourcedir = src
+
+modules = MuMuTilde
+
+opts = "-p contrib"
