@@ -10,5 +10,6 @@ modules = MuMuTilde
         , MuMuTilde.Rea1bis
         , MuMuTilde.Rea2bis
         , MuMuTilde.Rea4bis
+        , FB
 
 opts = "-p contrib"
