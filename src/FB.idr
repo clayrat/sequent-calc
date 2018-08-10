@@ -57,7 +57,7 @@ mutual
     NuCpr : Cmd (S m) n o p -> Cmd (S m) n o p -> Ctx m n o p Pos
     QC    : Stack m n o p                      -> Ctx m n o p Neg
 
--- typed    
+-- typed
 
 data Tp : Pol -> Type where
   TpQ   : Nat              -> Tp pol
@@ -70,10 +70,10 @@ data Tp : Pol -> Type where
   TpNot : Tp pol           -> Tp (neg pol)
 
 impV : Tp Pos -> Tp Pos -> Tp Pos
-impV p q = TpD (TpNot p `TpPar` TpU q)  
+impV p q = TpD (TpNot p `TpPar` TpU q)
 
 impN : Tp Neg -> Tp Neg -> Tp Neg
-impN m n = TpU (TpNot (m `TpPar` n))  
+impN m n = TpU (TpNot (m `TpPar` n))
 
 mutual
   data Tel : Side -> Nat -> Nat -> Type where
@@ -121,7 +121,7 @@ mutual
     MuT    : CmdT c g (CT LH t d)                                           -> ExpT g            (Mu c)        t               d
     MuParT : CmdT c g (CT LH tn0 (CT LH tn1 d))                             -> ExpT g            (MuPar c)     (TpPar tn0 tn1) d
     MuCpaT : (c0 : CmdT c g (CT LH tn0 d)) -> (c1 : CmdT c g (CT LH tn1 d)) -> ExpT g            (MuCpa c0 c1) (TpCpa tn0 tn1) d
-    QET    : ValT g v tp d                                                  -> ExpT g            (QE v)        tp              d            
+    QET    : ValT g v tp d                                                  -> ExpT g            (QE v)        tp              d
 
   data CtxT : (g : Tel RH m n) -> (e : Ctx m n o p pol) -> (a : Tp pol) -> (d : Tel LH o p) -> Type where
     VCT    : (ap : Var LH o (S p))                                          -> CtxT g (VarC ap)     tp              (CT LH tp d)
