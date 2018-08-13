@@ -12,4 +12,4 @@ modules = MuMuTilde
         , MuMuTilde.Rea4bis
         , FB
 
-opts = "-p contrib"
+opts = "-p contrib -p tparsec"
