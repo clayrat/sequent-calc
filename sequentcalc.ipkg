@@ -10,6 +10,14 @@ modules = MuMuTilde
         , MuMuTilde.Rea1bis
         , MuMuTilde.Rea2bis
         , MuMuTilde.Rea4bis
+        
         , FB
+
+        , Levy
+        , Levy.Syntax
+        , Levy.Lexer
+        , Levy.Parser
+        , Levy.TypeCheck
+        , Levy.Eval
 
 opts = "-p contrib -p tparsec"
