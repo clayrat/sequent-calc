@@ -7,7 +7,7 @@ import TParsec.Running
 
 mutual
   data TOK : Type where
-    VINT     : Int -> TOK
+    VINT     : Integer -> TOK
     TFORGET  : TOK
     TFREE    : TOK
     TARROW   : TOK
@@ -117,8 +117,8 @@ Tokenizer TOK where
       toTOK "" | StrNil = IGNORE
       toTOK (strCons x xs) | StrCons x xs = 
         let s = strCons x xs in
-        if x == '-' && (all isDigit $ unpack s) 
-          then VINT (cast {to=Int} s)
+        if x == '-' && (all isDigit $ unpack xs) 
+          then VINT (cast {to=Integer} s)
           else if (all isDigit $ unpack s) 
-            then VINT (cast {to=Int} s) 
+            then VINT (cast {to=Integer} s) 
             else auxTOK s
