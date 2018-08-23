@@ -122,9 +122,13 @@ Tokenizer TOK where
     toTOK s with (strM s)
       toTOK "" | StrNil = IGNORE
       toTOK (strCons x xs) | StrCons x xs = 
-        let s = strCons x xs in
-        if x == '-' && (all isDigit $ unpack xs) 
+        let s = strCons x xs 
+            xsc = unpack xs
+          in  
+        if x == '-' && length xsc > 0 && all isDigit xsc
           then VINT (cast {to=Integer} s)
-          else if (all isDigit $ unpack s) 
-            then VINT (cast {to=Integer} s) 
-            else auxTOK s
+          else 
+            let sc = unpack s in
+              if length sc > 0 && all isDigit sc
+              then VINT (cast {to=Integer} s) 
+              else auxTOK s

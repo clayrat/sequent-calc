@@ -55,18 +55,18 @@ expr = fix _ $ \rec =>
              , cmap (EBool False) $ ex FALSE
              , between (ex LPAREN) (ex RPAREN) rec
              ]
-    rapp = alts [ e
-                , map Force  $ rand (ex FORCE)  e
+    rapp = alts [ map Force  $ rand (ex FORCE)  e
                 , map Return $ rand (ex RETURN) e
                 , map Thunk  $ rand (ex THUNK)  e
+                , e
                 ]
     app = chainl1 rapp (cmap Apply $ ex APP)               
     factor = chainl1 app (cmap Times $ ex TIMES)
     arop = (cmap Plus $ ex PLUS) `alt` (cmap Minus $ ex MINUS) 
     arith = chainl1 factor arop 
-    bool = alts [ arith 
-                , map (\(x,y) => Equal x y) $ and arith $ rand (ex EQUAL) arith
+    bool = alts [ map (\(x,y) => Equal x y) $ and arith $ rand (ex EQUAL) arith
                 , map (\(x,y) => Less x y)  $ and arith $ rand (ex LESS)  arith
+                , arith 
                 ]
     in
   alts [ bool
