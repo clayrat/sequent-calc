@@ -22,12 +22,14 @@ mutual
     IN       : TOK
     IS       : TOK
     LET      : TOK
+    TOPLET   : TOK  -- hacky
     REC      : TOK
     RETURN   : TOK
     THEN     : TOK
     THUNK    : TOK
     TRUE     : TOK
     SEMISEMI : TOK
+    APP      : TOK  -- hacky
     LPAREN   : TOK
     RPAREN   : TOK
     TIMES    : TOK
@@ -57,12 +59,14 @@ Eq TOK where
   (==)  IN        IN       = True
   (==)  IS        IS       = True
   (==)  LET       LET      = True
+  (==)  TOPLET    TOPLET   = True
   (==)  REC       REC      = True
   (==)  RETURN    RETURN   = True
   (==)  THEN      THEN     = True
   (==)  THUNK     THUNK    = True
   (==)  TRUE      TRUE     = True
   (==)  SEMISEMI  SEMISEMI = True
+  (==)  APP       APP      = True
   (==)  LPAREN    LPAREN   = True
   (==)  RPAREN    RPAREN   = True
   (==)  TIMES     TIMES    = True
@@ -95,12 +99,14 @@ Tokenizer TOK where
     auxTOK "in"     = IN      
     auxTOK "is"     = IS      
     auxTOK "let"    = LET     
+    auxTOK "let_"   = TOPLET  
     auxTOK "rec"    = REC     
     auxTOK "return" = RETURN  
     auxTOK "then"   = THEN    
     auxTOK "thunk"  = THUNK   
     auxTOK "true"   = TRUE    
     auxTOK ";;"     = SEMISEMI
+    auxTOK "$"      = APP
     auxTOK "("      = LPAREN  
     auxTOK ")"      = RPAREN  
     auxTOK "*"      = TIMES   
