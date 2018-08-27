@@ -102,32 +102,32 @@ mutual
     VarVT : (xp : Var RH (S m) n)                -> ValT (CT RH g tp) (VarV xp)     tp              d
     DT    : ExpT g v a d                         -> ValT g            (D v)         (TpD a)         d
     NotVT : StackT g e a d                       -> ValT g            (NotV e)      (TpNot a)       d
-    I0T   : ValT g vp0 tp0 d                     -> ValT g            (I0 vp0)      (TPCpr tp0 tp1) d
-    I1T   : ValT g vp1 tp1 d                     -> ValT g            (I1 vp1)      (TPCpr tp0 tp1) d
-    TenT  : ValT g vp0 tp0 d -> ValT g vp1 tp1 d -> ValT g            (Ten vp0 vp1) (TPTen tp0 tp1) d
+    I0T   : ValT g vp0 tp0 d                     -> ValT g            (I0 vp0)      (TpCpr tp0 tp1) d
+    I1T   : ValT g vp1 tp1 d                     -> ValT g            (I1 vp1)      (TpCpr tp0 tp1) d
+    TenT  : ValT g vp0 tp0 d -> ValT g vp1 tp1 d -> ValT g            (Ten vp0 vp1) (TpTen tp0 tp1) d
 
   data StackT : (g : Tel RH m n) -> (en : Stack m n o p) -> (tn : Tp Neg) -> (d : Tel LH o p) -> Type where
     VarST : (an : Var LH o (S p))                    -> StackT g (VarS an)     tn              (CT LH tn d)
     UT    : CtxT g e a d                             -> StackT g (U e)         (TpU a)         d
     NotST : ValT g v a d                             -> StackT g (NotS e)      (TpNot a)       d
-    P0T   : StackT g en0 tn0 d                       -> StackT g (P0 en0)      (TPCpa tn0 tn1) d
-    P1T   : StackT g en1 tn1 d                       -> StackT g (P1 en1)      (TPCpa tn0 tn1) d
-    ParT  : StackT g en0 tn0 d -> StackT g en1 tn1 d -> StackT g (Par en0 en1) (TPPar tn0 tn1) d
+    P0T   : StackT g en0 tn0 d                       -> StackT g (P0 en0)      (TpCpa tn0 tn1) d
+    P1T   : StackT g en1 tn1 d                       -> StackT g (P1 en1)      (TpCpa tn0 tn1) d
+    ParT  : StackT g en0 tn0 d -> StackT g en1 tn1 d -> StackT g (Par en0 en1) (TpPar tn0 tn1) d
 
   data ExpT : (g : Tel RH m n) -> (v : Exp m n o p pol) -> (a : Tp pol) -> (d : Tel LH o p) -> Type where
-    VarET  : (xn : Var RH (S m) n)                                          -> ExpT (CT RH g tp) (VarE xn)     tp              d
-    MuUT   : CmdT c g (CT LH tp d)                                          -> ExpT g            (MuU c)       (TpU tp)        d
-    MuNotT : CmdT c (CT RH g tp) d                                          -> ExpT g            (MuNot c)     (TpNot tp)      d
-    MuT    : CmdT c g (CT LH t d)                                           -> ExpT g            (Mu c)        t               d
-    MuParT : CmdT c g (CT LH tn0 (CT LH tn1 d))                             -> ExpT g            (MuPar c)     (TpPar tn0 tn1) d
-    MuCpaT : (c0 : CmdT c g (CT LH tn0 d)) -> (c1 : CmdT c g (CT LH tn1 d)) -> ExpT g            (MuCpa c0 c1) (TpCpa tn0 tn1) d
-    QET    : ValT g v tp d                                                  -> ExpT g            (QE v)        tp              d
+    VarET  : (xn : Var RH (S m) n)                              -> ExpT (CT RH g tp) (VarE xn)     tp                   d
+    MuUT   : CmdT c g (CT LH tp d)                              -> ExpT g            (MuU c)       (TpU tp)             d
+    MuNotT : CmdT c (CT RH g tp) d                              -> ExpT g            (MuNot c)     (TpNot {pol=Pos} tp) d
+    MuT    : CmdT c g (CT LH t d)                               -> ExpT g            (Mu c)        t                    d
+    MuParT : CmdT c g (CT LH tn0 (CT LH tn1 d))                 -> ExpT g            (MuPar c)     (TpPar tn0 tn1)      d
+    MuCpaT : CmdT c0 g (CT LH tn0 d) -> CmdT c1 g (CT LH tn1 d) -> ExpT g            (MuCpa c0 c1) (TpCpa tn0 tn1)      d
+    QET    : ValT g v tp d                                      -> ExpT g            (QE v)        tp                   d
 
   data CtxT : (g : Tel RH m n) -> (e : Ctx m n o p pol) -> (a : Tp pol) -> (d : Tel LH o p) -> Type where
-    VCT    : (ap : Var LH o (S p))                                          -> CtxT g (VarC ap)     tp              (CT LH tp d)
-    NuDT   : CmdT c (CT RH g tn) d                                          -> CtxT g (NuD c)       (TpD tn)        d
-    NuNotT : CmdT с g (CT LH tn d)                                          -> CtxT g (NuNot c)     (TpNot tn)      d
-    NuT    : CmdT с (CT RH g t) d                                           -> CtxT g (Nu c)        t               d
-    NuTenT : CmdT с (CT RH g (CT RH tp0 tp1)) d                             -> CtxT g (NuTen c)     (TpTen tp0 tp1) d
-    NuCprT : (c0 : CmdT с (CT RH g tp0) d) -> (c1 : CmdT с (CT RH g tp1) d) -> CtxT g (NuCpr c0 c1) (TpCpr tp0 tp1) d
-    QCT    : StackT g e tn d                                                -> CtxT g (QC e)        tn              d
+    VCT    : (ap : Var LH o (S p))                              -> CtxT g (VarC ap)     tp                   (CT LH tp d)
+    NuDT   : CmdT c (CT RH g tn) d                              -> CtxT g (NuD c)       (TpD tn)             d
+    NuNotT : CmdT c g (CT LH tn d)                              -> CtxT g (NuNot c)     (TpNot {pol=Neg} tn) d
+    NuT    : CmdT с (CT RH g t) d                               -> CtxT g (Nu c)        t                    d
+    NuTenT : CmdT c (CT RH (CT RH g tp0) tp1) d                 -> CtxT g (NuTen c)     (TpTen tp0 tp1)      d
+    NuCprT : CmdT с0 (CT RH g tp0) d -> CmdT с1 (CT RH g tp1) d -> CtxT g (NuCpr c0 c1) (TpCpr tp0 tp1)      d
+    QCT    : StackT g e tn d                                    -> CtxT g (QC e)        tn                   d
