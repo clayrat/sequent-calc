@@ -1,9 +1,9 @@
 module Levy.Parser
 
 import Control.Monad.State
+import Data.DList
 import Data.NEList
 import TParsec
-import TParsec.Running
 import Levy.Lexer
 import Levy.Syntax
 
@@ -87,3 +87,6 @@ toplevel = alts [ map (\(n,e) => TLDef n e) $
                   rand (ex TOPLET) $ and fromVar $ rand (ex EQUAL) expr
                 , map TLExpr expr 
                 ]
+
+file : All (Parser' (List TopLevelCmd))
+file = map DList.toList $ chainl1 (map wrap toplevel) (cmap (++) $ ex SEMI)

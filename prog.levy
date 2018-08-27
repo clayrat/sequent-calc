@@ -1,0 +1,43 @@
+return ( 2 + 2 ) ; 
+return ( 2 * 3 ) ;
+return ( 2 - 4 ) ;
+
+if 5 < 3 then return 1 else return 5 ;
+if 2 = 2 then return 1 else return 5 ; 
+
+fun n : int => return ( n + 3 ) ;
+fun n : int => if n < 0 then return ( 0 - n ) else return n ;
+
+rec f : int -> F int is fun n : int =>
+  if n = 0 then
+    return 1
+  else
+    ( do m <- ( force f ) $ ( n - 1 ) in return ( n * m ) ) ;
+
+return 42 ;
+
+let_ x = thunk ( if 3 < 5 then return 1 else return 2 ) ;
+
+force ( thunk ( if 3 < 5 then return 1 else return 2 ) ) ;
+
+let x = 3 + 5 in return ( x * x ) ;
+
+do x <- return ( 3 + 5 ) in return ( x * x ) ; 
+
+let_ a = 5 ;
+let_ b = 10 + a ;
+let_ c = thunk ( return b ) ;
+
+let_ fact = thunk ( rec f : int -> F int is 
+  fun k : int =>
+    if k = 0 
+      then return 1
+      else ( 
+        do m <- ( force f ) $ ( k - 1 ) in 
+        return ( k * m ) 
+      ) 
+  ) ; 
+
+( force fact ) $ 7 ;
+
+force c

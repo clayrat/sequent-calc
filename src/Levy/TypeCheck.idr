@@ -33,11 +33,11 @@ mutual
   printVType : VType -> Doc
   printVType  VInt         = text "int"
   printVType  VBool        = text "bool"
-  printVType (VForget cty) = parens $ text "U@" |++| printCType cty
+  printVType (VForget cty) = parens $ text "U" |++| printCType cty
 
   printCType : CType -> Doc
-  printCType (CFree vty)      = parens $ text "F@" |++| printVType vty
-  printCType (CArrow vty cty) = parens $ printVType vty |+| text "@ ->@" |++| printCType cty
+  printCType (CFree vty)      = parens $ text "F" |++| printVType vty
+  printCType (CArrow vty cty) = parens $ printVType vty |+| text " ->" |++| printCType cty
 
 mutual
   asCType : CTypeS -> Either Doc CType
