@@ -9,14 +9,6 @@ import Levy.Syntax
 
 -- Type checking
 
-mutual
-  data CType = CFree VType        -- free type [F s]
-             | CArrow VType CType -- Function type [s -> t]
-
-  data VType = VInt          -- integer [int]
-             | VBool         -- booleans [bool]
-             | VForget CType -- thunked type [U t]
-
 mutual 
   Eq CType where
     (CFree v1) == (CFree v2) = v1 == v2
@@ -38,22 +30,6 @@ mutual
   printCType : CType -> Doc
   printCType (CFree vty)      = parens $ text "F" |++| printVType vty
   printCType (CArrow vty cty) = parens $ printVType vty |+| text " ->" |++| printCType cty
-
-mutual
-  asCType : CTypeS -> Either Doc CType
-  asCType (CFreeS ty)       = do vty <- asVType ty
-                                 pure $ CFree vty
-  asCType (CArrowS ty1 ty2) = do vty1 <- asVType ty1
-                                 cty2 <- asCType ty2
-                                 pure $ CArrow vty1 cty2
-  asCType _                 = Left $ text "this is not a computation type"
-
-  asVType : VTypeS -> Either Doc VType
-  asVType VIntS         = Right VInt
-  asVType VBoolS        = Right VBool
-  asVType (VForgetS ty) = do cty <- asCType ty
-                             pure $ VForget cty
-  asVType _             = Left $ text "this is not a value type"
 
 Ctx : Type
 Ctx = SortedMap Name VType
@@ -106,9 +82,8 @@ mutual
                                  ty <- ctypeOf ctx e2
                                  checkCType ctx ty e3
                                  pure ty
-  ctypeOf ctx (Fun x ty e)  = do ty1 <- asVType ty
-                                 ty2 <- ctypeOf (insert x ty1 ctx) e 
-                                 pure $ CArrow ty1 ty2
+  ctypeOf ctx (Fun x ty e)  = do ty2 <- ctypeOf (insert x ty ctx) e 
+                                 pure $ CArrow ty ty2
   ctypeOf ctx (Apply e1 e2) = do ct <- ctypeOf ctx e1 
                                  case ct of
                                    CArrow ty1 ty2 => do checkVType ctx ty1 e2
@@ -126,7 +101,6 @@ mutual
                                  case vt of 
                                    VForget ty => pure ty
                                    ty => Left $ text "this expression is forced but its type is" |++| printVType ty
-  ctypeOf ctx (Rec x ty e)  = do ty1 <- asCType ty
-                                 checkCType (insert x (VForget ty1) ctx) ty1 e
-                                 pure ty1
+  ctypeOf ctx (Rec x ty e)  = do checkCType (insert x (VForget ty) ctx) ty e
+                                 pure ty
   ctypeOf ctx  _            = Left $ text "a computation was expected but a value was encountered"

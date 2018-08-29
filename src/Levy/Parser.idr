@@ -31,20 +31,26 @@ fromVInt = maybeTok $ \t => case t of
   VINT i => Just i
   _      => Nothing
 
-ty : All (Parser' LTypeS)
-ty = fix _ $ \rec =>
-       let 
-         arr = cmap CArrowS $ ex TARROW 
-         t = alts [ cmap VIntS   $ ex TINT
-                  , cmap VBoolS  $ ex TBOOL
-                  , between (ex LPAREN) (ex RPAREN) rec 
-                  ]
-         app = alts [ t 
-                    , map VForgetS $ rand (ex TFORGET) t
-                    , map CFreeS   $ rand (ex TFREE) t
-                    ]
-         in 
-       chainr1 app arr
+vty : All (Box (Parser' CType) :-> Parser' VType) 
+vty pc = alts [ cmap VInt    $ ex TINT
+              , cmap VBool   $ ex TBOOL
+              , map  VForget $ rand (ex TFORGET) $ altx (between (ex LPAREN) (ex RPAREN) pc) pc
+              ]
+
+cty : All (Box (Parser' CType) :-> Parser' CType)
+cty rec = alts [ map CFree $ rand (ex TFREE) $ altx (between (ex LPAREN) (ex RPAREN) (vty rec)) (vty rec)
+               , map (\(v,c) => CArrow v c) $ and (vty rec) $ rand (ex TARROW) rec
+               ]
+
+record Ty (n : Nat) where
+  constructor MkTy
+  parv : Parser' VType n      
+  parc : Parser' CType n    
+  
+ty : All Ty
+ty = fix Ty $ \rec =>                  
+  let ihv = Nat.map {a=Ty} parc rec in 
+  MkTy (vty ihv) (cty ihv)
 
 expr : All (Parser' Expr)
 expr = fix _ $ \rec =>
@@ -77,11 +83,11 @@ expr = fix _ $ \rec =>
        , map (\(i,t,e) => If i t e) $ 
          rand (ex IF) $ andx rec $ rand (ex THEN) $ andx rec $ rand (ex ELSE) rec
        , map (\(n,t,e) => Fun n t e) $ 
-         rand (ex FUN) $ and fromVar $ rand (ex COLON) $ andx ty $ rand (ex DARROW) rec
+         rand (ex FUN) $ and fromVar $ rand (ex COLON) $ andx (parv ty) $ rand (ex DARROW) rec
        , map (\(n,t,e) => Rec n t e) $ 
-         rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx ty $ rand (ex IS) rec
+         rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx (parc ty) $ rand (ex IS) rec
        ]
-  
+       
 toplevel : All (Parser' TopLevelCmd)
 toplevel = alts [ map (\(n,e) => TLDef n e) $ 
                   rand (ex TOPLET) $ and fromVar $ rand (ex EQUAL) expr
