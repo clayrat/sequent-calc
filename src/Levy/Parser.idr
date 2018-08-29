@@ -17,6 +17,10 @@ andx : All (Box (Parser' s) :-> Box (Parser' t) :-> Box (Parser' (s, t)))
 andx p q =                                                               
   Nat.map2 {a=Parser' _} {b=Parser' _} (\p, q => Combinators.and p q) p q  
 
+altx : All (Box (Parser' a) :-> Box (Parser' a) :-> Box (Parser' a))
+altx p q =                                                               
+  Nat.map2 {a=Parser' _} {b=Parser' _} (\p, q => Combinators.alt p q) p q  
+
 -- workarounds for #4504   
 ex : TOK -> All (Parser' TOK)   
 ex = exact
@@ -87,7 +91,7 @@ expr = fix _ $ \rec =>
        , map (\(n,t,e) => Rec n t e) $ 
          rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx (parc ty) $ rand (ex IS) rec
        ]
-       
+
 toplevel : All (Parser' TopLevelCmd)
 toplevel = alts [ map (\(n,e) => TLDef n e) $ 
                   rand (ex TOPLET) $ and fromVar $ rand (ex EQUAL) expr
