@@ -84,19 +84,21 @@ expr rec pv =
   let 
     free = alt (map Force $ rand (ex FORCE) (val rec pv)) 
                (map Return $ rand (ex RETURN) (val rec pv)) 
+    freeb = alt (between (ex LPAREN) (ex RPAREN) free) free
+    e = alts [ hchainl freeb (cmap Apply $ ex APP) (val rec pv)
+             , map (\(n,v,e) => Let n v e) $ 
+               rand (ex LET) $ and fromVar $ rand (ex EQUAL) $ and (val rec pv) $ rand (ex IN) rec
+             , map (\(n,e1,e2) => Do n e1 e2) $ 
+               rand (ex DO) $ and fromVar $ rand (ex ASSIGN) $ andx rec $ rand (ex IN) rec
+             , map (\(i,t,e) => If i t e) $ 
+               rand (ex IF) $ and (val rec pv) $ rand (ex THEN) $ andx rec $ rand (ex ELSE) rec
+             , map (\(n,t,e) => Fun n t e) $ 
+               rand (ex FUN) $ and fromVar $ rand (ex COLON) $ andx (pvty ty) $ rand (ex DARROW) rec
+             , map (\(n,t,e) => Rec n t e) $ 
+               rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx (pcty ty) $ rand (ex IS) rec
+             ]
     in
-  alts [ hchainl free (cmap Apply $ ex APP) (val rec pv)
-       , map (\(n,v,e) => Let n v e) $ 
-         rand (ex LET) $ and fromVar $ rand (ex EQUAL) $ and (val rec pv) $ rand (ex IN) rec
-       , map (\(n,e1,e2) => Do n e1 e2) $ 
-         rand (ex DO) $ and fromVar $ rand (ex ASSIGN) $ andx rec $ rand (ex IN) rec
-       , map (\(i,t,e) => If i t e) $ 
-         rand (ex IF) $ and (val rec pv) $ rand (ex THEN) $ andx rec $ rand (ex ELSE) rec
-       , map (\(n,t,e) => Fun n t e) $ 
-         rand (ex FUN) $ and fromVar $ rand (ex COLON) $ andx (pvty ty) $ rand (ex DARROW) rec
-       , map (\(n,t,e) => Rec n t e) $ 
-         rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx (pcty ty) $ rand (ex IS) rec
-       ]
+   alt (between (ex LPAREN) (ex RPAREN) e) e
 
 record Term (n : Nat) where
   constructor MkTerm

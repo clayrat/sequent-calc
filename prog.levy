@@ -12,7 +12,7 @@ rec f : int -> F int is fun n : int =>
   if n = 0 then
     return 1
   else
-    ( do m <- ( force f ) $ ( n - 1 ) in return ( n * m ) ) ;
+    ( do m <- ( ( force f ) $ ( n - 1 ) ) in return ( n * m ) ) ;
 
 return 42 ;
 
@@ -33,11 +33,11 @@ let_ fact = thunk ( rec f : int -> F int is
     if k = 0 
       then return 1
       else ( 
-        do m <- ( force f ) $ ( k - 1 ) in 
+        do m <- ( ( force f ) $ ( k - 1 ) ) in 
         return ( k * m ) 
       ) 
   ) ; 
 
-( force fact ) $ 7 ;
+( ( force fact ) $ 7 ) ;
 
 force c
