@@ -52,9 +52,8 @@ mutual
   	                        VThunk env e => comp env e
   	                        _ => Left $ text "thunk expected in force"
   comp env e@(Rec x _ e') = comp (insert x (VThunk env e) env) e'
-  comp env  _ = Left $ text "computation expected"
   
-  expr : Env -> Expr -> Either Doc Value
+  expr : Env -> Val -> Either Doc Value
   expr env (Var x) = maybe (Left $ text "unknown variable" |++| text x) Right (lookup x env)
   expr env (EInt k) = pure $ VInt k
   expr env (EBool b) = pure $ VBool b
@@ -84,4 +83,3 @@ mutual
                              case (v1, v2) of 
                                (VInt k1, VInt k2) => pure $ VBool (k1 < k2)
                                _ => Left $ text "integers expected in <"
-  expr env _ = Left $ text "expression expected"

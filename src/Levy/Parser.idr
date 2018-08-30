@@ -35,6 +35,8 @@ fromVInt = maybeTok $ \t => case t of
   VINT i => Just i
   _      => Nothing
 
+-- Types  
+
 vty : All (Box (Parser' CType) :-> Parser' VType) 
 vty pc = alts [ cmap VInt    $ ex TINT
               , cmap VBool   $ ex TBOOL
@@ -48,54 +50,73 @@ cty rec = alts [ map CFree $ rand (ex TFREE) $ altx (between (ex LPAREN) (ex RPA
 
 record Ty (n : Nat) where
   constructor MkTy
-  parv : Parser' VType n      
-  parc : Parser' CType n    
+  pvty : Parser' VType n      
+  pcty : Parser' CType n    
   
 ty : All Ty
-ty = fix Ty $ \rec =>                  
-  let ihv = Nat.map {a=Ty} parc rec in 
-  MkTy (vty ihv) (cty ihv)
+ty = fix _ $ \rec =>
+  let ihс = Nat.map {a=Ty} pcty rec in 
+  MkTy (vty ihс) (cty ihс)
 
-expr : All (Parser' Expr)
-expr = fix _ $ \rec =>
+-- Terms  
+
+val : All (Box (Parser' Expr) :-> Box (Parser' Val) :-> Parser' Val)  
+val pe rec = 
   let 
-    e = alts [ map Var            $ fromVar
+    v = alts [ map Thunk          $ rand (ex THUNK) pe
+             , map Var            $ fromVar
              , map EInt           $ fromVInt
              , cmap (EBool True)  $ ex TRUE
              , cmap (EBool False) $ ex FALSE
              , between (ex LPAREN) (ex RPAREN) rec
              ]
-    rapp = alts [ map Force  $ rand (ex FORCE)  e
-                , map Return $ rand (ex RETURN) e
-                , map Thunk  $ rand (ex THUNK)  e
-                , e
-                ]
-    app = chainl1 rapp (cmap Apply $ ex APP)               
-    factor = chainl1 app (cmap Times $ ex TIMES)
+    factor = chainl1 v (cmap Times $ ex TIMES)
     arop = (cmap Plus $ ex PLUS) `alt` (cmap Minus $ ex MINUS) 
     arith = chainl1 factor arop 
-    bool = alts [ map (\(x,y) => Equal x y) $ and arith $ rand (ex EQUAL) arith
-                , map (\(x,y) => Less x y)  $ and arith $ rand (ex LESS)  arith
-                , arith 
-                ]
     in
-  alts [ bool
+    alts [ map (\(x,y) => Equal x y) $ and arith $ rand (ex EQUAL) arith
+         , map (\(x,y) => Less x y)  $ and arith $ rand (ex LESS)  arith
+         , arith 
+         ]
+
+expr : All (Box (Parser' Expr) :-> Box (Parser' Val) :-> Parser' Expr)
+expr rec pv =
+  let 
+    free = alt (map Force $ rand (ex FORCE) (val rec pv)) 
+               (map Return $ rand (ex RETURN) (val rec pv)) 
+    in
+  alts [ hchainl free (cmap Apply $ ex APP) (val rec pv)
        , map (\(n,v,e) => Let n v e) $ 
-         rand (ex LET) $ and fromVar $ rand (ex EQUAL) $ andx rec $ rand (ex IN) rec
+         rand (ex LET) $ and fromVar $ rand (ex EQUAL) $ and (val rec pv) $ rand (ex IN) rec
        , map (\(n,e1,e2) => Do n e1 e2) $ 
          rand (ex DO) $ and fromVar $ rand (ex ASSIGN) $ andx rec $ rand (ex IN) rec
        , map (\(i,t,e) => If i t e) $ 
-         rand (ex IF) $ andx rec $ rand (ex THEN) $ andx rec $ rand (ex ELSE) rec
+         rand (ex IF) $ and (val rec pv) $ rand (ex THEN) $ andx rec $ rand (ex ELSE) rec
        , map (\(n,t,e) => Fun n t e) $ 
-         rand (ex FUN) $ and fromVar $ rand (ex COLON) $ andx (parv ty) $ rand (ex DARROW) rec
+         rand (ex FUN) $ and fromVar $ rand (ex COLON) $ andx (pvty ty) $ rand (ex DARROW) rec
        , map (\(n,t,e) => Rec n t e) $ 
-         rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx (parc ty) $ rand (ex IS) rec
+         rand (ex REC) $ and fromVar $ rand (ex COLON) $ andx (pcty ty) $ rand (ex IS) rec
        ]
+
+record Term (n : Nat) where
+  constructor MkTerm
+  pval : Parser' Val n      
+  pexp : Parser' Expr n    
+  
+term : All Term
+term = fix _ $ \rec =>
+  let 
+    ihe = Nat.map {a=Term} pexp rec 
+    ihv = Nat.map {a=Term} pval rec 
+    in 
+  MkTerm (val ihe ihv) (expr ihe ihv)
+
+-- Toplevel commands  
 
 toplevel : All (Parser' TopLevelCmd)
 toplevel = alts [ map (\(n,e) => TLDef n e) $ 
-                  rand (ex TOPLET) $ and fromVar $ rand (ex EQUAL) expr
-                , map TLExpr expr 
+                  rand (ex TOPLET) $ and fromVar $ rand (ex EQUAL) (pval term)
+                , map TLExpr (pexp term)
                 ]
 
 file : All (Parser' (List TopLevelCmd))

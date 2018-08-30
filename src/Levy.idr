@@ -28,19 +28,19 @@ exec (ctx, env) (TLExpr e)  =
           Right v => putStrLn $ (toString $ printValue v) ++ " : " ++ (toString $ printCType ty)
      pure (ctx, env)
 
-exec (ctx, env) (TLDef n e) =
-  do case vtypeOf ctx e of 
+exec (ctx, env) (TLDef n v) =
+  do case vtypeOf ctx v of 
        Left err => 
          do putStrLn $ toString err
             pure (ctx, env)
        Right ty => 
-         case expr env e of 
+         case expr env v of 
            Left err => 
              do putStrLn $ toString err
                 pure (ctx, env)
-           Right v => 
-             do putStrLn $ "val " ++ n ++ " : " ++ (toString $ printVType ty) ++ " = " ++ (toString $ printValue v)
-                pure (insert n ty ctx, insert n v env)
+           Right vl => 
+             do putStrLn $ "val " ++ n ++ " : " ++ (toString $ printVType ty) ++ " = " ++ (toString $ printValue vl)
+                pure (insert n ty ctx, insert n vl env)
 
 partial
 main : IO ()           

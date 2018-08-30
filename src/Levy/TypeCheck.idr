@@ -38,8 +38,8 @@ Ctx = SortedMap Name VType
 -- type [ty] in context [ctx].  It raises a type error if it does
 -- not.
 mutual 
-  checkVType : Ctx -> VType -> Expr -> Either Doc ()
-  checkVType ctx vty e = do vty' <- vtypeOf ctx e
+  checkVType : Ctx -> VType -> Val -> Either Doc ()
+  checkVType ctx vty v = do vty' <- vtypeOf ctx v
                             if vty' /= vty 
                                then Left $ text "this expression has value type" |++| printVType vty' |++| text "but is used as if its type is" |++| printVType vty
                                else pure () 
@@ -52,7 +52,7 @@ mutual
 
 -- [vtype_of ctx e] computes the value type of an expression [e] in context [ctx].
 -- It raises type error if [e] does not have a value type.
-  vtypeOf : Ctx -> Expr -> Either Doc VType
+  vtypeOf : Ctx -> Val -> Either Doc VType
   vtypeOf ctx (Var x)       = maybe (Left $ text "unknown identifier" |++| text x) Right (lookup x ctx) 
   vtypeOf ctx (EInt _)      = pure VInt
   vtypeOf ctx (EBool _)     = pure VBool
@@ -73,7 +73,6 @@ mutual
                                  pure VBool
   vtypeOf ctx (Thunk e)     = do ty <- ctypeOf ctx e
                                  pure $ VForget ty
-  vtypeOf ctx  _            = Left $ text "a value was expected but a computation was encountered"
 
 -- [ctype_of ctx e] computes the computation type of a computation [e] in context [ctx].
 -- It raises type error if [e] does not have a computation type.
@@ -103,4 +102,3 @@ mutual
                                    ty => Left $ text "this expression is forced but its type is" |++| printVType ty
   ctypeOf ctx (Rec x ty e)  = do checkCType (insert x (VForget ty) ctx) ty e
                                  pure ty
-  ctypeOf ctx  _            = Left $ text "a computation was expected but a value was encountered"
