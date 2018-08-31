@@ -71,8 +71,7 @@ mutual
   vtypeOf ctx (Less e1 e2)  = do checkVType ctx VInt e1
                                  checkVType ctx VInt e2
                                  pure VBool
-  vtypeOf ctx (Thunk e)     = do ty <- ctypeOf ctx e
-                                 pure $ VForget ty
+  vtypeOf ctx (Thunk e)     = map VForget (ctypeOf ctx e)
 
 -- [ctype_of ctx e] computes the computation type of a computation [e] in context [ctx].
 -- It raises type error if [e] does not have a computation type.
@@ -81,24 +80,19 @@ mutual
                                  ty <- ctypeOf ctx e2
                                  checkCType ctx ty e3
                                  pure ty
-  ctypeOf ctx (Fun x ty e)  = do ty2 <- ctypeOf (insert x ty ctx) e 
-                                 pure $ CArrow ty ty2
-  ctypeOf ctx (Apply e1 e2) = do ct <- ctypeOf ctx e1 
-                                 case ct of
-                                   CArrow ty1 ty2 => do checkVType ctx ty1 e2
-                                                        pure ty2
-                                   ty => Left $ text "this expression is used as a function but its type is" |++| printCType ty
-  ctypeOf ctx (Do x e1 e2)  = do ct <- ctypeOf ctx e1 
-                                 case ct of 
-                                   CFree ty1 => ctypeOf (insert x ty1 ctx) e2
-                                   ty => Left $ text "this expression is sequenced but its type is" |++| printCType ty
+  ctypeOf ctx (Fun x ty e)  = map (CArrow ty) (ctypeOf (insert x ty ctx) e)
+  ctypeOf ctx (Apply e1 e2) = do CArrow ty1 ty2 <- ctypeOf ctx e1 
+                                 | ty => Left (text "this expression is used as a function but its type is" |++| printCType ty)
+                                 checkVType ctx ty1 e2
+                                 pure ty2
+  ctypeOf ctx (Do x e1 e2)  = do CFree ty1 <- ctypeOf ctx e1 
+                                 | ty => Left (text "this expression is sequenced but its type is" |++| printCType ty)
+                                 ctypeOf (insert x ty1 ctx) e2
   ctypeOf ctx (Let x e1 e2) = do ty1 <- vtypeOf ctx e1
                                  ctypeOf (insert x ty1 ctx) e2
-  ctypeOf ctx (Return e)    = do ty <- vtypeOf ctx e
-                                 pure $ CFree ty
-  ctypeOf ctx (Force e)     = do vt <- vtypeOf ctx e 
-                                 case vt of 
-                                   VForget ty => pure ty
-                                   ty => Left $ text "this expression is forced but its type is" |++| printVType ty
+  ctypeOf ctx (Return e)    = map CFree (vtypeOf ctx e)
+  ctypeOf ctx (Force e)     = do VForget ty1 <- vtypeOf ctx e 
+                                 | ty => Left (text "this expression is forced but its type is" |++| printVType ty)
+                                 pure ty1
   ctypeOf ctx (Rec x ty e)  = do checkCType (insert x (VForget ty) ctx) ty e
                                  pure ty
