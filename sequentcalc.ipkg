@@ -20,4 +20,8 @@ modules = MuMuTilde
         , Levy.TypeCheck
         , Levy.Eval
 
+        , Krivine.Algebra.Terms
+        , Krivine.Algebra.Redex
+        , Krivine.Algebra.Iterated
+
 opts = "-p contrib -p tparsec"
