@@ -29,51 +29,6 @@ traceDecompose {c} t with (decompose c)
   traceDecompose t | DecompVal _ _ = t
   traceDecompose t | Decompose _ _ = Step t
 
-snoc : EvalCon s (Arr t1 t2) -> Closed t1 -> EvalCon s t2 
-snoc  MT          c = ARG c MT
-snoc (ARG c1 ctx) c = ARG c1 (snoc ctx c)
-
-data SnocView : EvalCon s t -> Type where
-  RMT : SnocView MT
-  RARG : (ctx : EvalCon s (Arr t t1)) -> (c : Closed t) -> SnocView (snoc ctx c)
-
-snocView : (ctx : EvalCon s t) -> SnocView ctx
-snocView MT = RMT
-snocView (ARG c ctx) with (snocView ctx)
-  snocView (ARG c MT)              | RMT          = RARG MT c
-  snocView (ARG c (snoc ctx1 c1)) | RARG ctx1 c1 = RARG (ARG c ctx1) c1
-
-plugSnoc : (c : Closed v) -> (ctx : EvalCon s (Arr v w)) -> (t : Closed s) -> plug t (snoc ctx c) = Clapp (plug t ctx) c
-plugSnoc c MT           t = Refl
-plugSnoc c (ARG c1 ctx) t = plugSnoc c ctx (Clapp t c1)
-
-headReduceAppAux : (f : Closed (Arr s t)) -> (c : Closed s) -> {fc : Closed t} -> Clapp f c = fc -> Not (Value f) 
-                -> headReduce fc = Clapp (headReduce f) c
-headReduceAppAux f c {fc} eq nvf with (decompose fc)
-  headReduceAppAux f c {fc=Clos (Lam body) e}      Refl nvf | DecompVal body e impossible
-  headReduceAppAux f c {fc=plug (fromRedex r) ctx} eq   nvf | Decompose r ctx with (snocView ctx)
-    headReduceAppAux f c Refl nvf | Decompose (Lookup _ _)  MT | RMT impossible
-    headReduceAppAux f c Refl nvf | Decompose (Rapp _ _ _)  MT | RMT impossible
-    headReduceAppAux f c eq   nvf | Decompose (Beta t e c1) MT | RMT with (clappU eq)
-      headReduceAppAux f c eq   nvf | Decompose (Beta t e c1) MT | RMT | Refl = 
-        absurd $ nvf $ rewrite fst $ clappInv eq in Val (Lam t) e
-    headReduceAppAux f c eq   nvf | Decompose r (snoc ctx1 c1) | RARG ctx1 c1 with (clappU $ trans eq (plugSnoc c1 ctx1 (fromRedex r)))
-      headReduceAppAux f c eq   nvf | Decompose r (snoc ctx1 c1) | RARG ctx1 c1 | Refl = 
-        rewrite plugSnoc c1 ctx1 (contract r) in 
-        let (eqf, eqc) = clappInv $ trans eq (plugSnoc c1 ctx1 (fromRedex r)) in
-        rewrite eqf in
-        rewrite eqc in
-        rewrite headReducePlug r ctx1 in
-        Refl
-
-headReduceApp : (f : Closed (Arr s t)) -> (c : Closed s) -> Not (Value f)
-                -> headReduce (Clapp f c) = Clapp (headReduce f) c
-headReduceApp f c nvf = headReduceAppAux f c Refl nvf
-
-headReduceAppApp : (c1 : Closed (Arr a (Arr b c))) -> (c2 : Closed a) -> (c3 : Closed b) 
-                -> headReduce (Clapp (Clapp c1 c2) c3) = Clapp (headReduce (Clapp c1 c2)) c3
-headReduceAppApp c1 c2 c3 = headReduceApp (Clapp c1 c2) c3 uninhabited
-
 lemma1 : (c : Closed s) -> Reducible (headReduce c) -> Reducible c
 lemma1 {s=O}       _                        h      = traceDecompose h
 lemma1 {s=Arr _ _}   (Clos (Lam body) env) (tr, h) = (Done {body} {e=env}, h)
