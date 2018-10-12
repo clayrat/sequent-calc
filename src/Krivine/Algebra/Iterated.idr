@@ -10,8 +10,13 @@ import Krivine.Algebra.Redex
 
 data Trace : Decomposition c -> Type where
   Done : {body : Tm (CC g s) t} -> {e : Env g} -> Trace (DecompVal body e)
-  Step : Trace (decompose (plug (contract r) ctx)) -> Trace (Decompose r ctx)    
-
+  Step : Trace (decompose (plug (contract r) ctx)) -> Trace (Decompose r ctx)
+  
+-- TODO  
+-- collapsible : (d : Decomposition c) -> (t1, t2 : Trace d) -> t1 = t2 
+-- collapsible (DecompVal body e)  Done      Done     = Refl
+-- collapsible (Decompose r ctx)  (Step t1) (Step t2) = ?wat
+  
 iterate : {c : Closed s} -> (d : Decomposition c) -> Trace d -> (c1 : Closed s ** Value c1)  
 iterate (DecompVal body e)  Done     = (Clos (Lam body) e ** Val (Lam body) e)
 iterate (Decompose r ctx)  (Step st) = iterate (decompose (plug (contract r) ctx)) st
