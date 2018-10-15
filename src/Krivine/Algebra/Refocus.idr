@@ -7,6 +7,10 @@ import Krivine.Algebra.Iterated
 %access public export
 %default total
 
+-- a small-step abstract machine that is not yet tail-recursive
+-- but forms a convenient halfway point between the small step evaluator and the Krivine machine
+
+-- instead of repeatedly plugging and decomposing, navigate directly to the next redex
 refocus : (c : Closed s) -> (ctx : EvalCon s t) -> Decomposition (plug c ctx)
 refocus (Clos (Lam body) env)  MT         = DecompVal body env
 refocus (Clos (Lam body) env) (ARG cl ct) = Decompose (Beta body env cl) ct
@@ -27,6 +31,10 @@ data TraceR : Decomposition c -> Type where
   DoneR : {body : Tm (CC g s) t} -> {e : Env g} -> TraceR (DecompVal body e)
   StepR : TraceR (refocus (contract r) ctx) -> TraceR (Decompose r ctx)
 
+collapsibleR : (d : Decomposition c) -> (t1, t2 : TraceR d) -> t1 = t2 
+collapsibleR (DecompVal _ _)    DoneR      DoneR = Refl
+collapsibleR (Decompose r ctx) (StepR t1) (StepR t2) = cong $ collapsibleR (refocus (contract r) ctx) t1 t2
+
 terminationLemma : Trace (decompose c) -> TraceR (decompose c)
 terminationLemma {c} tr with (decompose c)
   terminationLemma tr        | DecompVal body e = DoneR
@@ -39,6 +47,7 @@ terminationR c =
   rewrite refocusCorrect c MT in 
   terminationLemma (termination c)
 
+--  repeatedly refocuse and contract until a value has been reached  
 iterateR : {c : Closed s} -> (d : Decomposition c) -> TraceR d -> (c1 : Closed s ** Value c1)  
 iterateR (DecompVal body e) DoneR     = (Clos (Lam body) e ** Val (Lam body) e)
 iterateR (Decompose r ctx) (StepR tr) = iterateR (refocus (contract r) ctx) tr

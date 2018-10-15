@@ -8,19 +8,21 @@ import Krivine.Algebra.Redex
 
 -- == Iterated head reduction ==
 
+-- using the Bove-Capretta method: structural recursion over the call graph of a function   
 data Trace : Decomposition c -> Type where
   Done : {body : Tm (CC g s) t} -> {e : Env g} -> Trace (DecompVal body e)
   Step : Trace (decompose (plug (contract r) ctx)) -> Trace (Decompose r ctx)
   
--- TODO  
--- collapsible : (d : Decomposition c) -> (t1, t2 : Trace d) -> t1 = t2 
--- collapsible (DecompVal body e)  Done      Done     = Refl
--- collapsible (Decompose r ctx)  (Step t1) (Step t2) = ?wat
-  
+-- the traces themselves carry no computational content  
+collapsible : (d : Decomposition c) -> (t1, t2 : Trace d) -> t1 = t2 
+collapsible (DecompVal _ _)     Done      Done     = Refl
+collapsible (Decompose r ctx)  (Step t1) (Step t2) = cong $ collapsible (decompose (plug (contract r) ctx)) t1 t2
+
 iterate : {c : Closed s} -> (d : Decomposition c) -> Trace d -> (c1 : Closed s ** Value c1)  
 iterate (DecompVal body e)  Done     = (Clos (Lam body) e ** Val (Lam body) e)
 iterate (Decompose r ctx)  (Step st) = iterate (decompose (plug (contract r) ctx)) st
 
+-- logical relation that strengthens our induction hypothesis
 Reducible : Closed s -> Type
 Reducible {s=O}       c = Trace (decompose c)
 Reducible {s=Arr s _} c = (Trace (decompose c), (x : Closed s) -> Reducible x -> Reducible (Clapp c x))
@@ -59,6 +61,7 @@ mutual
   theorem (Clos t e)  = lemma2 t e (envTheorem e)
   theorem (Clapp f x) = snd (theorem f) x (theorem x)
 
+  -- every closed term in the environment is also reducible
   envTheorem : (e : Env g) -> ReducibleEnv e
   envTheorem  NE      = ()
   envTheorem (CE e c) = (theorem c, envTheorem e)
@@ -67,5 +70,6 @@ termination : (c : Closed s) -> Trace (decompose c)
 termination {s=O}       c = theorem c
 termination {s=Arr _ _} c = fst (theorem c)
 
+-- iteratively perform a single step of head reduction
 evaluate : Closed s -> (c1 : Closed s ** Value c1)
 evaluate c = iterate (decompose c) (termination c)

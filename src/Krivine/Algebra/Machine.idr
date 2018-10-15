@@ -7,6 +7,10 @@ import Krivine.Algebra.Refocus
 %access public export
 %default total
 
+-- we will combine mapping App to Clapp (refocus+contract) and evaluating the first argument of Clapp 
+-- into a single transition (compressing corridor transitions)
+-- as a result, we will no longer add closed applications to the environment or evaluation context
+
 -- enforce the absence of Clapp constructors on closed terms, environments, and evaluation contexts respectively
 mutual
   ValidClosure : Closed s -> Type
@@ -22,6 +26,7 @@ ValidEvalCon  MT                  = ()
 ValidEvalCon (ARG (Clos _ e) ctx) = (ValidEnv e, ValidEvalCon ctx)
 ValidEvalCon (ARG (Clapp _ _) _)  = Void
 
+-- now we can project the underlying context, environment and term from any valid closed term
 getCon : (c : Closed s ** ValidClosure c) -> Con
 getCon ((Clos {g} _ _) ** _)  = g
 getCon ((Clapp _ _)    ** vc) = absurd vc
@@ -34,11 +39,14 @@ getTm : (exc : (c : Closed s ** ValidClosure c)) -> Tm (getCon exc) s
 getTm ((Clos t _)  ** _) = t
 getTm ((Clapp _ _) ** vc) = absurd vc
 
+-- looking up a variable in a valid environment will always return a closure
 getClosure : (x : Ref g s) -> (e : Env g) -> (ve : ValidEnv e) -> (c : Closed s ** ValidClosure c)
 getClosure  Top    (CE _ (Clos t e) ) (_, ve) = (Clos t e ** ve)
 getClosure  Top    (CE _ (Clapp _ _)) (_, v)  = absurd v
 getClosure (Pop x) (CE e  _         ) (ve, _) = getClosure x e ve
 
+-- indexed by the three arguments to the Krivine machine: a term, an environment, and an evaluation context (aka stack)
+-- a constructor for every transition; recursive calls to the abstract machine correspond to recursive arguments to a constructor
 data TraceM : Tm g s -> Env e -> EvalCon s t -> Type where
   DoneM   : {e : Env g} -> (body : Tm (CC g t) s) -> TraceM (Lam body) e MT
   LookupM : {ctx : EvalCon s t} -> {e : Env g} -> (x : Ref g s) -> (ve : ValidEnv e) 
@@ -48,6 +56,7 @@ data TraceM : Tm g s -> Env e -> EvalCon s t -> Type where
   BetaM   : {e : Env g} -> (ctx : EvalCon s t) -> (t1 : Tm g1 s1) -> (e1 : Env g1) -> (body : Tm (CC g s1) s) -> TraceM body (CE e (Clos t1 e1)) ctx
          -> TraceM (Lam body) e (ARG (Clos t1 e1) ctx)
 
+-- corresponds to the Krivine abstract machine
 refocusM : {tm : Tm g s} -> {ctx : EvalCon s t} -> (e : Env g) -> TraceM tm e ctx -> (c : Closed t ** Value c)
 -- evaluation is finished
 refocusM e (DoneM body)         = (Clos (Lam body) e ** Val (Lam body) e)
@@ -73,6 +82,7 @@ lookupLemma (CE _ (Clos _ e1))  Top    (_, ve1) = ve1
 lookupLemma (CE _ (Clapp _ _))  Top    (_, v)   = absurd v
 lookupLemma (CE e  _         ) (Pop x) (ve, _)  = lookupLemma e x ve
 
+-- During execution, the Krivine machine only adds closures to the environment and evaluation context
 terminationLemmaM : (tm : Tm g s) -> (ctx : EvalCon s t) -> (e : Env g) -> (vctx : ValidEvalCon ctx) -> (ve : ValidEnv e) -> TraceR (refocus (Clos tm e) ctx) -> TraceM tm e ctx
 terminationLemmaM (Lam body)  MT                  _ ()         _   DoneR     = DoneM body
 terminationLemmaM (Lam body) (ARG (Clos t e1) ec) e (ve1, vec) ve (StepR tr) = BetaM ec t e1 body $ 
