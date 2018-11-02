@@ -24,4 +24,6 @@ modules = MuMuTilde
         , Krivine.Algebra.Redex
         , Krivine.Algebra.Iterated
 
+        , KSF.Prelim
+
 opts = "-p contrib -p tparsec"
