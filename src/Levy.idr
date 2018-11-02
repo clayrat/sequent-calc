@@ -50,7 +50,6 @@ main : IO ()
 main = 
   do [_, fnam] <- getArgs | _ => putStrLn "wrong args"
      Right prog <- readFile fnam | Left err => printLn err  
-     case parseMaybe prog file of 
-       Just p => do foldlM exec (SortedMap.empty, SortedMap.empty) p
-                    pure ()
-       Nothing => putStrLn "parse error"
+     Just p <- parseMaybe prog file | Nothing => putStrLn "parse error"
+     foldlM exec (SortedMap.empty, SortedMap.empty) p
+     pure ()
