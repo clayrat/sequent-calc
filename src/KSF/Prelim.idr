@@ -52,7 +52,7 @@ functional {a} {b} r = (x : a) -> (y, y' : b) -> r x y -> r x y' -> y = y'
 
 stepFunctionAux : (r : a -> b -> Type) -> a -> Maybe b -> Type
 stepFunctionAux r x (Just y) = r x y
-stepFunctionAux r x Nothing = (y : b) -> Not (r x y)
+stepFunctionAux r x Nothing  = (y : b) -> Not (r x y)
 
 stepFunction : (r : a -> b -> Type) -> (f : a -> Maybe b) -> Type
 stepFunction {a} {b} r f = (x : a) -> stepFunctionAux r x (f x)
@@ -68,7 +68,7 @@ computableClassical r (f ** step) s = aux (step s)
   where 
   aux : stepFunctionAux r s (f s) -> Dec (x' ** r s x')
   aux t with (f s)
-    aux t | Just y = Yes (y ** t)
+    aux t | Just y  = Yes (y ** t)
     aux t | Nothing = No $ \(x ** rsx) => t x rsx
 
 data All2 : (r : a -> b -> Type) -> List a -> List b -> Type where
@@ -83,7 +83,6 @@ data TerminatesOn : (r : a -> a -> Type) -> (x : a) -> Type where
   TerminatesC : ((x' : a) -> r x x' -> TerminatesOn r x') -> TerminatesOn r x
 
 interface ARS t where
-  ARS_X : t
   ARS_R : t -> t -> Type
 
 data Evaluates : (r : a -> a -> Type) -> a -> a -> Type where
