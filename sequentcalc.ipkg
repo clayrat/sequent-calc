@@ -23,7 +23,13 @@ modules = MuMuTilde
         , Krivine.Algebra.Terms
         , Krivine.Algebra.Redex
         , Krivine.Algebra.Iterated
+        , Krivine.Algebra.Refocus
+        , Krivine.Algebra.Machine
+
+        , Duploid
 
         , KSF.Prelim
+        , KSF.Lambda
+        , KSF.Programs
 
 opts = "-p contrib -p tparsec"
