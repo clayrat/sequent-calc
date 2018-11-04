@@ -69,10 +69,12 @@ Uninhabited (Abstraction (App _ _)) where
 Uninhabited (Abstraction (Var _)) where
   uninhabited (IsAbstraction _) impossible  
 
+{-
 decAbstraction : (x : Term) -> Dec (Abstraction x)
 decAbstraction (Var n)   = No absurd
 decAbstraction (App s t) = No absurd
 decAbstraction (Lam s)   = Yes (IsAbstraction s)   
+-}
 
 -- substitution
 
@@ -121,12 +123,13 @@ redL (App s t)             = do s' <- redL s
 redL _                     = Nothing
 
 stepLComputable : stepFunction StepL Lambda.redL
-stepLComputable (Var n)           = \_ => absurd 
-stepLComputable (App (Var k) t)   = \y, savkt => case savkt of 
+stepLComputable (Var n)                 = \_ => absurd 
+stepLComputable (App (Var k) t)         = \y, savkt => case savkt of 
   StepLAppL svk => absurd svk
-stepLComputable (App (App x y) t) = aux (stepLComputable (App x y))
+stepLComputable (App (App x y) t)       = aux (stepLComputable (App x y))
   where
-  aux : stepFunctionAux StepL (App x y) (redL (App x y)) -> stepFunctionAux StepL (App (App x y) t) ((redL (App x y)) >>= (\s' => Just (App s' t)))
+  aux : stepFunctionAux StepL (App x y) (redL (App x y)) 
+     -> stepFunctionAux StepL (App (App x y) t) ((redL (App x y)) >>= (\s' => Just (App s' t)))
   aux sa with (redL (App x y))
     aux sa | Just _  = StepLAppL sa
     aux sa | Nothing = \y, saa => case saa of 
@@ -135,14 +138,15 @@ stepLComputable (App (Lam x) (Var k))   = \y, salxvk => case salxvk of
   StepLAppL slx => absurd slx
 stepLComputable (App (Lam x) (App y z)) = aux (stepLComputable (App y z))
 where
-  aux : stepFunctionAux StepL (App y z) (redL (App y z)) -> stepFunctionAux StepL (App (Lam x) (App y z)) ((redL (App y z)) >>= (\t' => Just (App (Lam x) t')))
+  aux : stepFunctionAux StepL (App y z) (redL (App y z)) 
+     -> stepFunctionAux StepL (App (Lam x) (App y z)) ((redL (App y z)) >>= (\t' => Just (App (Lam x) t')))
   aux sa with (redL (App y z))
     aux sa | Just _  = StepLAppR sa
     aux sa | Nothing = \y, saa => case saa of 
       StepLAppR {t'=q} saq => absurd $ sa q saq
       StepLAppL slx => absurd slx
 stepLComputable (App (Lam x) (Lam y))   = StepLApp Refl
-stepLComputable (Lam s)           = \_ => absurd
+stepLComputable (Lam s)                 = \_ => absurd
 
 -- bound and closedness for terms
 
@@ -164,4 +168,42 @@ data Stuck : Term -> Type where
 Uninhabited (Stuck (Lam _)) where
   uninhabited StuckVar impossible  
   uninhabited (StuckL _) impossible  
-  uninhabited (StuckR _) impossible    
+  uninhabited (StuckR _) impossible
+
+notAbsLNotReducible : Not (reducible StepL x) -> Not (Abstraction x) -> Not (reducible StepL (App x y))
+notAbsLNotReducible _   nax (_ ** StepLApp {s} _)          = nax $ IsAbstraction s
+notAbsLNotReducible _   nax (App (Lam s) _ ** StepLAppR _) = nax $ IsAbstraction s
+notAbsLNotReducible nrx _   (App s _ ** StepLAppL sxs)     = nrx (s ** sxs)
+
+notAbsRNotReducible : Not (reducible StepL x) -> Not (reducible StepL y) -> Not (Abstraction y) -> Not (reducible StepL (App x y))
+notAbsRNotReducible _   _   nay (_ ** StepLApp {t} _)            = nay $ IsAbstraction t
+notAbsRNotReducible _   nry _   (App (Lam _) t ** StepLAppR syt) = nry (t ** syt)
+notAbsRNotReducible nrx _   _   (App s _ ** StepLAppL sxs)       = nrx (s ** sxs)
+
+notStuckL : Not (Stuck x) -> StepL x x1 -> Not (Stuck (App x y))
+notStuckL nsx _ (StuckL sl) = nsx sl
+notStuckL nsx sxx1 (StuckR sr) = absurd sxx1
+
+notStuckLR : Not (Stuck x) -> Not (Stuck y) -> Not (Stuck (App x y))
+notStuckLR nsx nsy (StuckL sl) = nsx sl
+notStuckLR nsx nsy (StuckR sr) = nsy sr
+
+LTrichotomy : (s : Term) -> exactlyOneHolds [reducible StepL s, Abstraction s, Stuck s]  
+LTrichotomy (Var k)   = Right (\(_**s) => absurd s, Right (absurd, Left (StuckVar, ())))
+LTrichotomy (App x y) = 
+  case LTrichotomy x of 
+    Left ((x1 ** sxx1), _, nsx, ()) => 
+      Left ((App x1 y ** StepLAppL sxx1), absurd, notStuckL nsx sxx1, ())
+    Right (nrx, Left (IsAbstraction lx, nsx, ())) => 
+      case LTrichotomy y of 
+        Left ((y1 ** syy1), nay, nsy, ()) => 
+          Left ((App (Lam lx) y1 ** StepLAppR syy1), absurd, notStuckLR nsx nsy, ())
+        Right (nry, Left (IsAbstraction ly, nsy, ())) =>
+          Left ((subst lx Z (Lam ly) ** StepLApp Refl), absurd, notStuckLR nsx nsy, ())
+        Right (nry, Right (nay, Left (sy, ()))) => 
+          Right (notAbsRNotReducible nrx nry nay, Right (absurd, Left (StuckR sy, ())))
+        Right (nry, Right (nay, Right (_, v))) => absurd v
+    Right (nrx, Right (nax, Left (sx, ()))) => 
+      Right (notAbsLNotReducible nrx nax, Right (absurd, Left (StuckL sx, ())))
+    Right (nrx, Right (nax, Right (_, v))) => absurd v
+LTrichotomy (Lam x)   = Right (\(_**s) => absurd s, Left (IsAbstraction x, absurd, ()))
