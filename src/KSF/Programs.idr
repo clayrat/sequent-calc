@@ -52,7 +52,8 @@ decompileAppend (LamT x y) as         as1 bs prf with (decompile x [])
   | Just (_::_::_) = absurd prf
   | Nothing        = absurd prf
 
-decompileLamTInv : (p, q : Pro) -> (as, bs : List Term) -> decompile (LamT q p) as = Just bs -> (s ** (decompile q [] = Just [s], decompile p (Lam s :: as) = Just bs))
+decompileLamTInv : (p, q : Pro) -> (as, bs : List Term) -> decompile (LamT q p) as = Just bs 
+               -> (s ** (decompile q [] = Just [s], decompile p (Lam s :: as) = Just bs))
 decompileLamTInv p q as bs prf with (decompile q []) 
   | Just []        = absurd prf
   | Just [s]       = (s ** (Refl, prf))
