@@ -130,3 +130,8 @@ noneHolds (p::ps) = (Not p, noneHolds ps)
 exactlyOneHolds : List Type -> Type
 exactlyOneHolds [] = Void
 exactlyOneHolds (p::ps) = Either (p, noneHolds ps) (Not p, exactlyOneHolds ps)
+
+decEqDiffIsNo : DecEq a => {x, y : a} -> Not (x=y) -> (contra ** decEq x y = No contra)
+decEqDiffIsNo {x} {y} contra with (decEq x y)
+  decEqDiffIsNo {x} {y=x} contra | Yes Refl = absurd $ contra Refl
+  decEqDiffIsNo {x} {y} contra   | No c = (c ** Refl)

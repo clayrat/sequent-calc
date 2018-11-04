@@ -207,3 +207,11 @@ LTrichotomy (App x y) =
       Right (notAbsLNotReducible nrx nax, Right (absurd, Left (StuckL sx, ())))
     Right (nrx, Right (nax, Right (_, v))) => absurd v
 LTrichotomy (Lam x)   = Right (\(_**s) => absurd s, Left (IsAbstraction x, absurd, ()))
+
+stuckNormal : Stuck s -> Not (reducible StepL s)
+stuckNormal {s} ss = 
+  case LTrichotomy s of 
+    Left ((s1 ** sss1), nas, nss, ())             => absurd $ nss ss
+    Right (nrs, Left (IsAbstraction ls, nss, ())) => absurd ss
+    Right (nrs, Right (nas, Left (ss, ())))       => nrs
+    Right (nrs, Right (nas, Right (_, v)))        => absurd v
