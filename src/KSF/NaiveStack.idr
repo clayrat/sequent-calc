@@ -72,8 +72,8 @@ betaTerminating (t,r::q::v) = assert_total $
 
 decompileT : List Pro -> List Term -> Maybe (List Term)
 decompileT []      as = Just as
-decompileT (p::ps) as with (decompile p as)
-  | Just as1 = decompileT ps as1
+decompileT (t::ts) as with (decompile t as)
+  | Just as1 = decompileT ts as1
   | _        = Nothing
 
 decompileV : List Pro -> Maybe (List Term)
@@ -164,3 +164,55 @@ decompileArgAbstractions {vs=v::vs} prf with (decompile v [])
     decompileArgAbstractions {vs=v::vs} prf | Just [ds] | Nothing  = absurd prf
   decompileArgAbstractions {vs=v::vs} prf | Just (s1::s2::ss) = absurd prf
   decompileArgAbstractions {vs=v::vs} prf | Nothing           = absurd prf
+
+substPRepSubst : repsP q s -> repsP r t -> decompile (substP q Z r) as = Just (subst s Z (Lam t)::as)  
+substPRepSubst {q} {s} {r} {t} {as} rqs rrt = 
+  decompileAppend (substP q 0 r) [] [subst s 0 (Lam t)] as $ 
+  Programs.substPRepSubst q r t Z [] [s] rrt rqs
+
+data StepLs : List Term -> List Term -> Type where
+  StepLsHere  : StepL s t -> All Abstraction as -> StepLs (s::as) (t::as)
+  StepLsThere : StepLs as bs -> StepLs (s::as) (s::bs)
+
+Uninhabited (StepLs [] _) where
+  uninhabited (StepLsHere _ _) impossible
+  uninhabited (StepLsThere _)   impossible
+
+Uninhabited (StepLs _ []) where
+  uninhabited (StepLsHere _ _) impossible
+  uninhabited (StepLsThere _)   impossible
+
+stepLsSingletonInv : StepLs [s] bs -> (t ** (bs = [t], StepL s t))
+stepLsSingletonInv (StepLsHere {t} sl []) = (t ** (Refl, sl))
+stepLsSingletonInv (StepLsThere sl)       = absurd sl
+
+stepLsDecomp : StepLs as as1 -> decompile p as = Just bs -> (bs1 ** (StepLs bs bs1, decompile p as1 = Just bs1))
+stepLsDecomp                   {as1}               {p=RetT}      sls                                  prf = 
+  rewrite sym $ justInjective prf in 
+  (as1 ** (sls, Refl))
+stepLsDecomp                                       {p=VarT n p}  sls                                  prf = 
+  stepLsDecomp (StepLsThere sls) prf
+stepLsDecomp                                       {p=LamT q p}  sls                                  prf with (decompile q [])
+  stepLsDecomp {p=LamT q p} sls prf | Just []           = absurd prf
+  stepLsDecomp {p=LamT q p} sls prf | Just [dq]         = stepLsDecomp (StepLsThere sls) prf
+  stepLsDecomp {p=LamT q p} sls prf | Just (d1::d2::ds) = absurd prf
+  stepLsDecomp {p=LamT q p} sls prf | Nothing           = absurd prf
+stepLsDecomp {as=[]}                               {p=AppT p}    sls                                  prf = absurd prf
+stepLsDecomp {as=[_]}                              {p=AppT p}    sls                                  prf = absurd prf
+stepLsDecomp {as=t::s::as}     {as1=[]}            {p=AppT p}    sls                                  prf = absurd sls
+stepLsDecomp {as=t::s::as}     {as1=[t]}           {p=AppT p}   (StepLsThere sls)                     prf = absurd sls
+stepLsDecomp {as=t::Lam s::as} {as1=t1::Lam s::as} {p=AppT p}   (StepLsHere st (IsAbstraction s::aa)) prf = 
+  stepLsDecomp (StepLsHere (StepLAppR st) aa) prf
+stepLsDecomp {as=t::s::as}     {as1=t::s1::as}     {p=AppT p}   (StepLsThere (StepLsHere st aa))      prf = 
+  stepLsDecomp (StepLsHere (StepLAppL st) aa) prf
+stepLsDecomp {as=t::s::as}     {as1=t::s::as1}     {p=AppT p}   (StepLsThere (StepLsThere sls))       prf = 
+  stepLsDecomp (StepLsThere sls) prf
+
+stepLsDecompileTask : StepLs as as1 -> decompileT ts as = Just bs -> (bs1 ** (StepLs bs bs1, decompileT ts as1 = Just bs1))
+stepLsDecompileTask {as1} {ts=[]}    sls prf = (as1 ** (rewrite sym $ justInjective prf in sls, Refl))
+stepLsDecompileTask {as}  {ts=t::ts} sls prf with (decompile t as) proof dtas
+  stepLsDecompileTask {as}  {ts=t::ts} sls prf | Just dt = 
+    let (bs2**(sl2, repP)) = stepLsDecomp {p=t} sls (sym dtas) in 
+    rewrite repP in
+    stepLsDecompileTask sl2 prf
+  stepLsDecompileTask {as}  {ts=t::ts} sls prf | Nothing = absurd prf 
