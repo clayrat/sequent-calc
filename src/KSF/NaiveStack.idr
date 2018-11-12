@@ -139,6 +139,12 @@ decompileArgInv {p} {ps} prf with (decompile p [])
   decompileArgInv {p} {ps} prf | Just (s1::s2::ss) = absurd prf
   decompileArgInv {p} {ps} prf | Nothing           = absurd prf
 
+decompileArgEmpty : decompileV xs = Just [] -> xs = []
+decompileArgEmpty {xs=[]}    prf = Refl
+decompileArgEmpty {xs=x::xs} prf = 
+  let (_**_**(prf1,_,_)) = decompileArgInv prf in 
+  absurd prf1
+
 decompileArgStep : decompile p [] = Just [s] -> decompileV vs = Just as -> decompileV (p::vs) = Just (Lam s::as)  
 decompileArgStep prf prf1 = 
   rewrite prf in 
@@ -216,3 +222,55 @@ stepLsDecompileTask {as}  {ts=t::ts} sls prf with (decompile t as) proof dtas
     rewrite repP in
     stepLsDecompileTask sl2 prf
   stepLsDecompileTask {as}  {ts=t::ts} sls prf | Nothing = absurd prf 
+
+betaSimulation : StepS Beta (t,v) (t1,v1) -> repsSL (t,v) s -> (s1 ** (repsSL (t1,v1) s1, StepL s s1))
+betaSimulation     (StepSBetaC _)                            ([]             ** (_,     repT0V0)) = absurd repT0V0
+betaSimulation     (StepSBetaC _)                            ([_]            ** (_,     repT0V0)) = absurd repT0V0
+betaSimulation {s} (StepSBetaC {p} {r} {q} {t=t2} {v=v1} su) ((a00::a01::a0) ** (repV1, repT0V0)) = 
+ let 
+   (u**as1**(eqa0, repD, repV2)) = decompileArgInv {p=r} {ps=q::v1} repV1 
+   (t0**a**(prf,repR,repV)) = decompileArgInv {p=q} {ps=v1} repV2
+   (a1**(repPA0, repTA1)) = decompileTaskInv {p=AppT p} {as=a00::a01::a0} {ps=t2} repT0V0 
+   (auprf, as1prf) = consInjective eqa0
+   (t0prf, a0prf) = consInjective (trans as1prf prf)
+   (b ** (redB, repB)) = stepLsDecompileTask 
+           {as=App (Lam t0) (Lam u) :: a} 
+           {as1=subst t0 Z (Lam u) :: a} 
+           {bs=[s]} 
+           {ts=p::t2} 
+           (StepLsHere (StepLApp Refl) (decompileArgAbstractions repV))
+           (rewrite sym auprf in 
+            rewrite sym t0prf in 
+            rewrite sym a0prf in 
+            rewrite repPA0 in  
+            repTA1) 
+   (s0 ** (sprf, red1)) = stepLsSingletonInv redB
+  in 
+  (s0 ** ((a ** (repV, rewrite sym sprf in 
+                       rewrite su in 
+                       rewrite NaiveStack.substPRepSubst {q} {r} {s=t0} {t=u} {as=a} repR repD in 
+                       repB)), red1))  
+
+data StuckLs : List Term -> Type where
+  StuckLsHere : All Abstraction as -> Stuck s -> StuckLs (s::as)
+  StuckLsThere : StuckLs as -> StuckLs (s::as)
+
+stuckDecompile : StuckLs as -> decompile p as = Just bs -> StuckLs bs
+stuckDecompile {p=RetT}                           stls                                     prf = rewrite sym $ justInjective prf in stls
+stuckDecompile {p=VarT n p}                       stls                                     prf = stuckDecompile (StuckLsThere stls) prf
+stuckDecompile {p=AppT p}     {as=[]}             stls                                     prf = absurd prf
+stuckDecompile {p=AppT p}     {as=[_]}            stls                                     prf = absurd prf
+stuckDecompile {p=AppT p}     {as=a0::Lam s1::as} (StuckLsHere (IsAbstraction s1::aa) sa0) prf = stuckDecompile (StuckLsHere aa (StuckR sa0)) prf
+stuckDecompile {p=AppT p}     {as=a0::a1    ::as} (StuckLsThere (StuckLsHere aa sa1))      prf = stuckDecompile (StuckLsHere aa (StuckL sa1)) prf
+stuckDecompile {p=AppT p}     {as=a0::a1    ::as} (StuckLsThere (StuckLsThere stls))       prf = stuckDecompile (StuckLsThere stls) prf
+stuckDecompile {p=LamT p1 p2}                     stls                                     prf with (decompile p1 [])
+  | Just []           = absurd prf
+  | Just [qd]         = stuckDecompile (StuckLsThere stls) prf
+  | Just (q1::q2::qs) = absurd prf
+  | Nothing           = absurd prf
+
+stuckDecompileTask : StuckLs as -> decompileT ts as = Just bs -> StuckLs bs 
+stuckDecompileTask      {ts=[]}    stas prf = rewrite sym $ justInjective prf in stas
+stuckDecompileTask {as} {ts=t::ts} stas prf with (decompile t as) proof das
+  | Just d  = stuckDecompileTask (stuckDecompile stas (sym das)) prf
+  | Nothing = absurd prf

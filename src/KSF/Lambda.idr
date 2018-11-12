@@ -69,13 +69,6 @@ Uninhabited (Abstraction (App _ _)) where
 Uninhabited (Abstraction (Var _)) where
   uninhabited (IsAbstraction _) impossible  
 
-{-
-decAbstraction : (x : Term) -> Dec (Abstraction x)
-decAbstraction (Var n)   = No absurd
-decAbstraction (App s t) = No absurd
-decAbstraction (Lam s)   = Yes (IsAbstraction s)   
--}
-
 -- substitution
 
 subst : Term -> Nat -> Term -> Term
@@ -106,13 +99,22 @@ ARS Term where
   ARS_R = StepL
 
 stepLFunct : functional StepL 
-stepLFunct (App (Lam s) (Lam t))  y                     z              (StepLApp ys)     (StepLApp zs)    = rewrite ys in rewrite zs in Refl
-stepLFunct (App (Lam s) (Lam t)) (App (Lam s) (Lam q))  z              (StepLAppR stq)   (StepLApp zs)    = absurd stq
-stepLFunct (App (Lam s) t)       (App (Lam s) q)       (App (Lam s) u) (StepLAppR stq)   (StepLAppR stu)  = cong $ stepLFunct t q u stq stu
-stepLFunct (App (Lam s) t)       (App (Lam s) q)       (App u t)       (StepLAppR stq)   (StepLAppL slsu) = absurd slsu
-stepLFunct (App (Lam s) (Lam r)) (App (Lam u) (Lam r))  z              (StepLAppL slslu) (StepLApp zs)    = absurd slslu
-stepLFunct (App (Lam s) t)       (App (Lam u) t)       (App (Lam s) q) (StepLAppL slslu) (StepLAppR stq)  = absurd slslu
-stepLFunct (App s r)             (App t r)             (App u r)       (StepLAppL sst)   (StepLAppL ssu)  = cong {f=\z=>App z r} $ stepLFunct s t u sst ssu
+stepLFunct (App (Lam s) (Lam t))  y                     z              (StepLApp ys)     (StepLApp zs)    = 
+  rewrite ys in 
+  rewrite zs in 
+  Refl
+stepLFunct (App (Lam s) (Lam t)) (App (Lam s) (Lam q))  z              (StepLAppR stq)   (StepLApp zs)    = 
+  absurd stq
+stepLFunct (App (Lam s) t)       (App (Lam s) q)       (App (Lam s) u) (StepLAppR stq)   (StepLAppR stu)  = 
+  cong $ stepLFunct t q u stq stu
+stepLFunct (App (Lam s) t)       (App (Lam s) q)       (App u t)       (StepLAppR stq)   (StepLAppL slsu) = 
+  absurd slsu
+stepLFunct (App (Lam s) (Lam r)) (App (Lam u) (Lam r))  z              (StepLAppL slslu) (StepLApp zs)    = 
+  absurd slslu
+stepLFunct (App (Lam s) t)       (App (Lam u) t)       (App (Lam s) q) (StepLAppL slslu) (StepLAppR stq)  = 
+  absurd slslu
+stepLFunct (App s r)             (App t r)             (App u r)       (StepLAppL sst)   (StepLAppL ssu)  = 
+  cong {f=\z=>App z r} $ stepLFunct s t u sst ssu
   
 redL : Term -> Maybe Term
 redL (App (Lam s) (Lam t)) = Just (subst s Z (Lam t))
@@ -181,7 +183,7 @@ notAbsRNotReducible _   nry _   (App (Lam _) t ** StepLAppR syt) = nry (t ** syt
 notAbsRNotReducible nrx _   _   (App s _ ** StepLAppL sxs)       = nrx (s ** sxs)
 
 notStuckL : Not (Stuck x) -> StepL x x1 -> Not (Stuck (App x y))
-notStuckL nsx _ (StuckL sl) = nsx sl
+notStuckL nsx _    (StuckL sl) = nsx sl
 notStuckL nsx sxx1 (StuckR sr) = absurd sxx1
 
 notStuckLR : Not (Stuck x) -> Not (Stuck y) -> Not (Stuck (App x y))
@@ -211,7 +213,7 @@ LTrichotomy (Lam x)   = Right (\(_**s) => absurd s, Left (IsAbstraction x, absur
 stuckNormal : Stuck s -> Not (reducible StepL s)
 stuckNormal {s} ss = 
   case LTrichotomy s of 
-    Left ((s1 ** sss1), nas, nss, ())             => absurd $ nss ss
+    Left ((s1 ** sss1), _, nss, ())               => absurd $ nss ss
     Right (nrs, Left (IsAbstraction ls, nss, ())) => absurd ss
-    Right (nrs, Right (nas, Left (ss, ())))       => nrs
-    Right (nrs, Right (nas, Right (_, v)))        => absurd v
+    Right (nrs, Right (_, Left (ss, ())))         => nrs
+    Right (nrs, Right (_, Right (_, v)))          => absurd v
