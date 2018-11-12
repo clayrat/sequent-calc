@@ -55,20 +55,20 @@ stepSFunctional (AppT p :: t, r :: q :: v) (s :: p :: t, v) y1               (Be
 stepSFunctional (AppT p :: t, r :: q :: v) y                (s :: p :: t, v) (Tau**s1)            (Beta**StepSBetaC _) = absurd s1
 stepSFunctional x                          y                y1               (Tau**s1)            (Tau**s2)            = tauFunctional x y y1 s1 s2
 
-tauTerminating : (s : StateS) -> TerminatesOn (StepS Tau) s
-tauTerminating ([]            ,v) = TerminatesC $ \_,st       => absurd st
-tauTerminating (RetT      ::ts,v) = assert_total $ -- TODO doesn't seem that dependent patmat kicks in here
-                                    TerminatesC $ \(ts, v), StepSNil => tauTerminating (ts, v)
-tauTerminating (VarT n p  ::ts,v) = TerminatesC $ \_,st       => absurd st
-tauTerminating (AppT p    ::ts,v) = TerminatesC $ \_,st       => absurd st
-tauTerminating (LamT p1 p2::ts,v) = assert_total $ 
-                                    TerminatesC $ \(p2::ts,p1::v), StepSPushVal => tauTerminating (p2::ts,p1::v)
+tauTerminating : TerminatesOn (StepS Tau) s
+tauTerminating {s=([]            ,v)} = TerminatesC $ \_,st       => absurd st
+tauTerminating {s=(RetT      ::ts,v)} = assert_total $ -- TODO doesn't seem that dependent patmat kicks in here
+                                        TerminatesC $ \(ts, v), StepSNil => tauTerminating {s=(ts, v)}
+tauTerminating {s=(VarT n p  ::ts,v)} = TerminatesC $ \_,st       => absurd st
+tauTerminating {s=(AppT p    ::ts,v)} = TerminatesC $ \_,st       => absurd st
+tauTerminating {s=(LamT p1 p2::ts,v)} = assert_total $ 
+                                        TerminatesC $ \(p2::ts,p1::v), StepSPushVal => tauTerminating {s=(p2::ts,p1::v)}
 
-betaTerminating : (s : StateS) -> TerminatesOn (StepS Beta) s
-betaTerminating (t,[])  = TerminatesC $ \_,st => absurd st
-betaTerminating (t,[v]) = TerminatesC $ \_,st => absurd st
-betaTerminating (t,r::q::v) = assert_total $ 
-                              TerminatesC $ \(s::p::t, v), (StepSBetaC su) => betaTerminating (s::p::t, v)
+betaTerminating : TerminatesOn (StepS Beta) s
+betaTerminating {s=(t,[])}      = TerminatesC $ \_,st => absurd st
+betaTerminating {s=(t,[v])}     = TerminatesC $ \_,st => absurd st
+betaTerminating {s=(t,r::q::v)} = assert_total $ 
+                                  TerminatesC $ \(s::p::t, v), (StepSBetaC su) => betaTerminating {s=(s::p::t, v)}
 
 decompileT : List Pro -> List Term -> Maybe (List Term)
 decompileT []      as = Just as
@@ -199,10 +199,10 @@ stepLsDecomp                   {as1}               {p=RetT}      sls            
 stepLsDecomp                                       {p=VarT n p}  sls                                  prf = 
   stepLsDecomp (StepLsThere sls) prf
 stepLsDecomp                                       {p=LamT q p}  sls                                  prf with (decompile q [])
-  stepLsDecomp {p=LamT q p} sls prf | Just []           = absurd prf
-  stepLsDecomp {p=LamT q p} sls prf | Just [dq]         = stepLsDecomp (StepLsThere sls) prf
-  stepLsDecomp {p=LamT q p} sls prf | Just (d1::d2::ds) = absurd prf
-  stepLsDecomp {p=LamT q p} sls prf | Nothing           = absurd prf
+  | Just []           = absurd prf
+  | Just [dq]         = stepLsDecomp (StepLsThere sls) prf
+  | Just (d1::d2::ds) = absurd prf
+  | Nothing           = absurd prf
 stepLsDecomp {as=[]}                               {p=AppT p}    sls                                  prf = absurd prf
 stepLsDecomp {as=[_]}                              {p=AppT p}    sls                                  prf = absurd prf
 stepLsDecomp {as=t::s::as}     {as1=[]}            {p=AppT p}    sls                                  prf = absurd sls
@@ -223,10 +223,10 @@ stepLsDecompileTask {as}  {ts=t::ts} sls prf with (decompile t as) proof dtas
     stepLsDecompileTask sl2 prf
   stepLsDecompileTask {as}  {ts=t::ts} sls prf | Nothing = absurd prf 
 
-betaSimulation : StepS Beta (t,v) (t1,v1) -> repsSL (t,v) s -> (s1 ** (repsSL (t1,v1) s1, StepL s s1))
-betaSimulation     (StepSBetaC _)                            ([]             ** (_,     repT0V0)) = absurd repT0V0
-betaSimulation     (StepSBetaC _)                            ([_]            ** (_,     repT0V0)) = absurd repT0V0
-betaSimulation {s} (StepSBetaC {p} {r} {q} {t=t2} {v=v1} su) ((a00::a01::a0) ** (repV1, repT0V0)) = 
+betaSimulation : repsSL (t,v) s -> StepS Beta (t,v) (t1,v1) -> (s1 ** (repsSL (t1,v1) s1, StepL s s1))
+betaSimulation     ([]             ** (_,     repT0V0)) (StepSBetaC _)                            = absurd repT0V0
+betaSimulation     ([_]            ** (_,     repT0V0)) (StepSBetaC _)                            = absurd repT0V0
+betaSimulation {s} ((a00::a01::a0) ** (repV1, repT0V0)) (StepSBetaC {p} {r} {q} {t=t2} {v=v1} su) = 
  let 
    (u**as1**(eqa0, repD, repV2)) = decompileArgInv {p=r} {ps=q::v1} repV1 
    (t0**a**(prf,repR,repV)) = decompileArgInv {p=q} {ps=v1} repV2
@@ -252,8 +252,12 @@ betaSimulation {s} (StepSBetaC {p} {r} {q} {t=t2} {v=v1} su) ((a00::a01::a0) ** 
                        repB)), red1))  
 
 data StuckLs : List Term -> Type where
-  StuckLsHere : All Abstraction as -> Stuck s -> StuckLs (s::as)
+  StuckLsHere  : All Abstraction as -> Stuck s -> StuckLs (s::as)
   StuckLsThere : StuckLs as -> StuckLs (s::as)
+
+Uninhabited (StuckLs []) where
+  uninhabited (StuckLsHere _ _) impossible
+  uninhabited (StuckLsThere _)  impossible
 
 stuckDecompile : StuckLs as -> decompile p as = Just bs -> StuckLs bs
 stuckDecompile {p=RetT}                           stls                                     prf = rewrite sym $ justInjective prf in stls
@@ -274,3 +278,61 @@ stuckDecompileTask      {ts=[]}    stas prf = rewrite sym $ justInjective prf in
 stuckDecompileTask {as} {ts=t::ts} stas prf with (decompile t as) proof das
   | Just d  = stuckDecompileTask (stuckDecompile stas (sym das)) prf
   | Nothing = absurd prf
+
+stateSTrichotomy : repsSL (ts,vs) s -> Either (reducible (any StepS) (ts,vs))
+                                        (Either (p**s1**((ts,vs)=([],[p]), s = Lam s1, repsP p s1))
+                                                (x**p**t1**(ts = VarT x p::t1, Stuck s)))  
+stateSTrichotomy {ts=[]}             {vs=[]}         (as**(h1,h2))           = 
+  absurd $ trans (justInjective h1) (justInjective h2)
+stateSTrichotomy {ts=[]}             {vs=v::vs}      (as**(h1,h2))           = 
+  let 
+    [IsAbstraction s1] = decompileArgAbstractions {vs=v::vs} (trans h1 h2) 
+    (s2**as1**(prf, prf1, prf2)) = decompileArgInv {p=v} {ps=vs} (trans h1 h2) 
+    (Refl,Refl) = consInjective prf
+    Refl = decompileArgEmpty prf2
+   in
+  Right $ Left (v ** s2 ** (Refl, Refl, prf1))
+stateSTrichotomy {ts=RetT      ::ts} {vs}            (as**(h1,h2))           = 
+  Left ((ts,vs) ** Tau ** StepSNil)
+stateSTrichotomy {ts=VarT n t  ::ts}                 (as**(h1,h2))           with (decompile t (Var n::as)) proof det
+  | Just dp = 
+    let aa = decompileArgAbstractions h1 in
+    case stuckDecompileTask (stuckDecompile (StuckLsHere aa StuckVar) (sym det)) h2 of
+      StuckLsHere [] sts => Right $ Right (n**t**ts**(Refl, sts))
+      StuckLsThere stls  => absurd stls
+  | Nothing = absurd h2
+stateSTrichotomy {ts=AppT t    ::ts}                 ([]          **(h1,h2)) = absurd h2
+stateSTrichotomy {ts=AppT t    ::ts}                 ([a]         **(h1,h2)) = absurd h2
+stateSTrichotomy {ts=AppT t    ::ts} {vs=[]}         ((a1::a2::as)**(h1,h2)) = absurd $ justInjective h1
+stateSTrichotomy {ts=AppT t    ::ts} {vs=[v]}        ((a1::a2::as)**(h1,h2)) with (decompile v [])
+  | Just []             = absurd h1
+  | Just [dv]           = absurd $ snd $ consInjective $ justInjective h1
+  | Just (dv1::dv2::dv) = absurd h1
+  | Nothing             = absurd h1
+stateSTrichotomy {ts=AppT t    ::ts} {vs=v1::v2::vs} ((a1::a2::as)**(h1,h2)) = 
+  Left ((substP v2 Z v1 :: t :: ts, vs) ** Beta ** StepSBetaC Refl)
+stateSTrichotomy {ts=LamT t1 t2::ts} {vs}            (as**(h1,h2))           = 
+  Left ((t2::ts, t1::vs) ** Tau ** StepSPushVal)
+
+reducibleRed : repsSL (ts,vs) s -> reducible StepL s -> reducible (any StepS) (ts,vs)
+reducibleRed rep red = 
+  case stateSTrichotomy rep of 
+    Left rdc                         => rdc
+    Right (Left (_**_**(_,Refl,_)))  => absurd $ snd red
+    Right (Right (_**_**_**(_,stk))) => absurd $ stuckNormal stk red
+
+-- TODO reformulate originals with unsplit states?    
+reducibleRed' : repsSL st s -> reducible StepL s -> reducible (any StepS) st
+reducibleRed' {st=(ts,vs)} = reducibleRed
+
+tauSimulation' : repsSL st s -> StepS Tau st st1 -> repsSL st1 s  
+tauSimulation' {st=(t,v)} {st1=(t1,v1)} = tauSimulation
+
+betaSimulation' : repsSL st s -> StepS Beta st st1 -> (s1 ** (repsSL st1 s1, StepL s s1))
+betaSimulation' {st=(t,v)} {st1=(t1,v1)} = betaSimulation
+
+stackLRefinement : refinementARS NaiveStack.repsSL    
+stackLRefinement = (reducibleRed', tauSimulation', betaSimulation', \_ => tauTerminating)
+
+compileStackL : repsSL ([compile s RetT], []) s
+compileStackL {s} = ([]**(Refl, rewrite decompileCorrect s RetT [] in Refl))
