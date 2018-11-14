@@ -3,6 +3,7 @@ module KSF.ClosMachine
 import Data.List
 import Data.List.Quantifiers
 import KSF.Prelim
+import KSF.Lambda
 import KSF.Programs
 import KSF.Refinements
 import KSF.NaiveStack
@@ -59,8 +60,10 @@ reducibility {t=ClosC (VarT k p) s  ::ts} {v}                     (x1**l   **r) 
   reducibility {t=ClosC (VarT k p) s  ::ts} {v} (x1**l**r) | Nothing = absurd r
 reducibility {t=ClosC (AppT x) s    ::ts} {v=[]}                  (x1**Beta**r) = absurd r
 reducibility {t=ClosC (AppT x) s    ::ts} {v=[v]}                 (x1**Beta**r) = absurd r
-reducibility {t=ClosC (AppT p) s    ::ts} {v=v1::ClosC vc v2::vs} (x1**l   **r) = ((ClosC vc (v1::v2) :: ClosC p s ::ts, vs) ** Beta ** StepBetaC) 
-reducibility {t=ClosC (LamT p1 p2) s::ts} {v}                     (x1**l   **r) = ((ClosC p2 s ::ts, ClosC p1 s ::v) ** Tau ** StepPushVal)
+reducibility {t=ClosC (AppT p) s    ::ts} {v=v1::ClosC vc v2::vs} (x1**l   **r) = 
+  ((ClosC vc (v1::v2) :: ClosC p s ::ts, vs) ** Beta ** StepBetaC) 
+reducibility {t=ClosC (LamT p1 p2) s::ts} {v}                     (x1**l   **r) = 
+  ((ClosC p2 s ::ts, ClosC p1 s ::v) ** Tau ** StepPushVal)
 
 closedSCPreserved : closedSC (t,v) -> any StepC (t,v) (t1,v1) -> closedSC (t1,v1)
 closedSCPreserved ([],                                                  _ ) (_   **s           ) = absurd s
@@ -74,7 +77,8 @@ closedSCPreserved (BoundCC (BoundPApp bp) fa   ::at, bg::BoundCC bc fc::av) (Bet
      Here => bg
      There el2 => fc el2) :: BoundCC bp fa :: at, av)
     
-tauSimulation : StepC Tau (t,v) (t1,v1) -> StepS Tau (map (decompileC 0) t, map (decompileC 1) v) (map (decompileC 0) t1, map (decompileC 1) v1)     
+tauSimulation : StepC Tau (t,v) (t1,v1) -> StepS Tau (map (decompileC 0) t , map (decompileC 1) v ) 
+                                                     (map (decompileC 0) t1, map (decompileC 1) v1)     
 tauSimulation  StepNil               = StepSNil
 tauSimulation (StepLoad {k} {e} {q} prf) with (index' (minus k 0) (map (decompileC 1) e)) proof idx
   | Just dq  = 
@@ -88,10 +92,52 @@ tauSimulation (StepLoad {k} {e} {q} prf) with (index' (minus k 0) (map (decompil
       absurd $ trans idx dq
 tauSimulation  StepPushVal           = StepSPushVal 
     
-betaSimulation : closedSC (t,v) -> StepC Beta (t,v) (t1,v1) -> StepS Beta (map (decompileC 0) t, map (decompileC 1) v) (map (decompileC 0) t1, map (decompileC 1) v1)
+betaSimulation : closedSC (t,v) -> StepC Beta (t,v) (t1,v1) -> StepS Beta (map (decompileC 0) t , map (decompileC 1) v ) 
+                                                                          (map (decompileC 0) t1, map (decompileC 1) v1)
 betaSimulation (_,_::BoundCC _ fb::_) (StepBetaC {f}) = 
   StepSBetaC $ 
   substPlCons {w=map (decompileC 1) f} $ 
   allMap f (\z => BoundP z 1) (decompileC 1) $ 
   elemAll f $ 
   translateCBoundP . fb
+
+reducible' : repsCS a b -> reducible (any StepS) b -> reducible (any StepC) a
+reducible' {a=(tc,vc)} {b=(tp,vp)} (_, (prft, prfv)) = 
+  rewrite sym prft in 
+  rewrite sym prfv in 
+  reducibility
+
+tauSimulation' : repsCS a b -> StepC Tau a a1 -> (b1 ** (repsCS a1 b1, StepS Tau b b1))  
+tauSimulation' {a=(tc,vc)} {a1=(tc1,vc1)} {b=(tp,vp)} (cl, (prft, prfv)) stc = 
+  rewrite sym prft in 
+  rewrite sym prfv in   
+  ((map (decompileC 0) tc1, map (decompileC 1) vc1) ** 
+    ((closedSCPreserved cl (Tau**stc), Refl, Refl), tauSimulation stc))
+
+betaSimulation' : repsCS a b -> StepC Beta a a1 -> (b1 ** (repsCS a1 b1, StepS Beta b b1)) 
+betaSimulation' {a=(tc,vc)} {a1=(tc1,vc1)} {b=(tp,vp)} (cl, (prft, prfv)) stb =
+  rewrite sym prft in 
+  rewrite sym prfv in   
+  ((map (decompileC 0) tc1, map (decompileC 1) vc1) ** 
+    ((closedSCPreserved cl (Beta**stb), Refl, Refl), betaSimulation cl stb))
+
+closStackRefinement : refinementM ClosMachine.repsCS
+closStackRefinement = 
+  ( reducible'
+  , tauSimulation'
+  , betaSimulation'
+  )
+
+compileClosStack : closedP p -> repsCS ([ClosC p []], []) ([p], [])
+compileClosStack {p} cl = (([BoundCC cl absurd], []), (cong {f=\q=>[q]} $ substPlNil p, Refl))
+
+repsCL : StateC -> Term -> Type
+repsCL = rcomp repsCS repsSL
+
+closLRefinement : refinementARS ClosMachine.repsCL
+closLRefinement = composition closStackRefinement stackLRefinement
+
+compileClosL : closedL s -> repsCL ([ClosC (compile s RetT) []], []) s
+compileClosL {s} cl = 
+  (([compile s RetT], []) ** 
+    (compileClosStack (boundCompile cl BoundPRet), compileStackL))
