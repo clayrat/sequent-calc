@@ -40,8 +40,8 @@ Machine StateS where
   MRel = StepS
 
 tauFunctional : functional (StepS Tau)
-tauFunctional (LamT q p :: t, v) (p :: t, q :: v) (p :: t, q :: v) StepSPushVal StepSPushVal = Refl
-tauFunctional (RetT :: t, v)     (t, v)           (t, v)           StepSNil     StepSNil     = Refl
+tauFunctional (LamT q p::t, v) (p::t, q::v) (p::t, q::v) StepSPushVal StepSPushVal = Refl
+tauFunctional (RetT::t,     v) (t,    v)    (t,    v)    StepSNil     StepSNil     = Refl
 
 betaFunctional : functional (StepS Beta)  
 betaFunctional (AppT p :: t, r :: q :: ay) (s :: p :: t, ay)  (s1 :: p :: t, ay) (StepSBetaC su) (StepSBetaC su1) = 
@@ -50,10 +50,10 @@ betaFunctional (AppT p :: t, r :: q :: ay) (s :: p :: t, ay)  (s1 :: p :: t, ay)
   Refl
 
 stepSFunctional : functional (any StepS)  
-stepSFunctional x                          y                y1               (Beta**s1)           (Beta**s2)           = betaFunctional x y y1 s1 s2
-stepSFunctional (AppT p :: t, r :: q :: v) (s :: p :: t, v) y1               (Beta**StepSBetaC _) (Tau**s2)            = absurd s2
-stepSFunctional (AppT p :: t, r :: q :: v) y                (s :: p :: t, v) (Tau**s1)            (Beta**StepSBetaC _) = absurd s1
-stepSFunctional x                          y                y1               (Tau**s1)            (Tau**s2)            = tauFunctional x y y1 s1 s2
+stepSFunctional x                    y            y1           (Beta**s1)           (Beta**s2)           = betaFunctional x y y1 s1 s2
+stepSFunctional (AppT p::t, r::q::v) (s::p::t, v) y1           (Beta**StepSBetaC _) (Tau**s2)            = absurd s2
+stepSFunctional (AppT p::t, r::q::v) y            (s::p::t, v) (Tau**s1)            (Beta**StepSBetaC _) = absurd s1
+stepSFunctional x                    y            y1           (Tau**s1)            (Tau**s2)            = tauFunctional x y y1 s1 s2
 
 tauTerminating : TerminatesOn (StepS Tau) s
 tauTerminating {s=([]            ,v)} = TerminatesC $ \_,st       => absurd st
@@ -105,22 +105,27 @@ repsSLComputable = (repsSLComp ** \(ts,vs) => aux {tsa=ts} {vsa=vs})
   aux : {tsa : List Pro} -> {vsa : List Pro} -> stepFunctionAux NaiveStack.repsSL (tsa, vsa) (repsSLComp (tsa, vsa))
   aux {vsa} {tsa} with (decompileV vsa) proof dvsa
     aux {vsa} {tsa} | Just dv with (decompileT tsa dv) proof dtsa 
-      aux {vsa} {tsa} | Just dv | Just []           = rewrite sym dvsa in 
-                                                      \y, (_**(prf,prf1)) => 
-                                                      let prf2 = replace {P=\q=>decompileT tsa q = Just [y]} (sym $ justInjective prf) prf1 in 
-                                                      uninhabited $ justInjective $ trans dtsa prf2
-      aux {vsa} {tsa} | Just dv | Just [s]          = rewrite sym dvsa in 
-                                                      (dv ** (Refl, sym dtsa))
-      aux {vsa} {tsa} | Just dv | Just (s1::s2::ss) = rewrite sym dvsa in 
-                                                      \y, (_**(prf,prf1)) => 
-                                                      let prf2 = replace {P=\q=>decompileT tsa q = Just [y]} (sym $ justInjective prf) prf1 in 
-                                                      uninhabited $ snd $ consInjective $ justInjective $ trans dtsa prf2
-      aux {vsa} {tsa} | Just dv | Nothing           = rewrite sym dvsa in 
-                                                      \y, (_**(prf,prf1)) => 
-                                                      let prf2 = replace {P=\q=>decompileT tsa q = Just [y]} (sym $ justInjective prf) prf1 in 
-                                                      uninhabited $ trans dtsa prf2
-    aux {vsa} {tsa} | Nothing = rewrite sym dvsa in 
-                                \_, (_**(prf,_)) => uninhabited prf
+      aux {vsa} {tsa} | Just dv | Just []           = 
+        rewrite sym dvsa in 
+        \y, (_**(prf,prf1)) => 
+        let prf2 = replace {P=\q=>decompileT tsa q = Just [y]} (sym $ justInjective prf) prf1 in 
+        uninhabited $ justInjective $ trans dtsa prf2
+      aux {vsa} {tsa} | Just dv | Just [s]          = 
+        rewrite sym dvsa in 
+        (dv ** (Refl, sym dtsa))
+      aux {vsa} {tsa} | Just dv | Just (s1::s2::ss) = 
+        rewrite sym dvsa in 
+        \y, (_**(prf,prf1)) => 
+        let prf2 = replace {P=\q=>decompileT tsa q = Just [y]} (sym $ justInjective prf) prf1 in 
+        uninhabited $ snd $ consInjective $ justInjective $ trans dtsa prf2
+      aux {vsa} {tsa} | Just dv | Nothing           = 
+        rewrite sym dvsa in 
+        \y, (_**(prf,prf1)) => 
+        let prf2 = replace {P=\q=>decompileT tsa q = Just [y]} (sym $ justInjective prf) prf1 in 
+        uninhabited $ trans dtsa prf2
+    aux {vsa} {tsa} | Nothing = 
+      rewrite sym dvsa in 
+      \_, (_**(prf,_)) => uninhabited prf
 
 decompileTaskInv : decompileT (p::ps) as = Just bs -> (as1 ** (decompile p as = Just as1, decompileT ps as1 = Just bs))
 decompileTaskInv {p} {as} prf with (decompile p as)
@@ -260,13 +265,20 @@ Uninhabited (StuckLs []) where
   uninhabited (StuckLsThere _)  impossible
 
 stuckDecompile : StuckLs as -> decompile p as = Just bs -> StuckLs bs
-stuckDecompile {p=RetT}                           stls                                     prf = rewrite sym $ justInjective prf in stls
-stuckDecompile {p=VarT n p}                       stls                                     prf = stuckDecompile (StuckLsThere stls) prf
-stuckDecompile {p=AppT p}     {as=[]}             stls                                     prf = absurd prf
-stuckDecompile {p=AppT p}     {as=[_]}            stls                                     prf = absurd prf
-stuckDecompile {p=AppT p}     {as=a0::Lam s1::as} (StuckLsHere (IsAbstraction s1::aa) sa0) prf = stuckDecompile (StuckLsHere aa (StuckR sa0)) prf
-stuckDecompile {p=AppT p}     {as=a0::a1    ::as} (StuckLsThere (StuckLsHere aa sa1))      prf = stuckDecompile (StuckLsHere aa (StuckL sa1)) prf
-stuckDecompile {p=AppT p}     {as=a0::a1    ::as} (StuckLsThere (StuckLsThere stls))       prf = stuckDecompile (StuckLsThere stls) prf
+stuckDecompile {p=RetT}                           stls                                     prf = 
+  rewrite sym $ justInjective prf in stls
+stuckDecompile {p=VarT n p}                       stls                                     prf = 
+  stuckDecompile (StuckLsThere stls) prf
+stuckDecompile {p=AppT p}     {as=[]}             stls                                     prf = 
+  absurd prf
+stuckDecompile {p=AppT p}     {as=[_]}            stls                                     prf = 
+  absurd prf
+stuckDecompile {p=AppT p}     {as=a0::Lam s1::as} (StuckLsHere (IsAbstraction s1::aa) sa0) prf = 
+  stuckDecompile (StuckLsHere aa (StuckR sa0)) prf
+stuckDecompile {p=AppT p}     {as=a0::a1    ::as} (StuckLsThere (StuckLsHere aa sa1))      prf = 
+  stuckDecompile (StuckLsHere aa (StuckL sa1)) prf
+stuckDecompile {p=AppT p}     {as=a0::a1    ::as} (StuckLsThere (StuckLsThere stls))       prf = 
+  stuckDecompile (StuckLsThere stls) prf
 stuckDecompile {p=LamT p1 p2}                     stls                                     prf with (decompile p1 [])
   | Just []           = absurd prf
   | Just [qd]         = stuckDecompile (StuckLsThere stls) prf

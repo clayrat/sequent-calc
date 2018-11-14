@@ -1,9 +1,15 @@
 module KSF.Prelim
 
+import Data.List
 import Data.List.Quantifiers
 
 %access public export
 %default total
+
+decNot : DecEq a => {x, y : a} -> Not (x=y) -> (ctra ** decEq x y = No ctra)
+decNot {x} {y} nxy with (decEq x y)
+  | Yes eq = absurd $ nxy eq
+  | No neq = (neq ** Refl)
 
 -- nats
 
@@ -16,7 +22,49 @@ sizeInduction {a} f p step x = step x (g (f x))
   g  Z    _ ltfyn = absurd ltfyn
   g (S k) y ltfyn = step y $ \z, ltfzfy => g k z (lteTransitive ltfzfy (fromLteSucc ltfyn))
 
+notLteSucc : Not (LTE (S k) k)
+notLteSucc (LTESucc lte) = notLteSucc lte
+
+lteNotEqSucc : LTE k n -> Not (k = S n) 
+lteNotEqSucc {k} {n} lte prf = notLteSucc {k=n} $ replace {P=\q=>LTE q n} prf lte
+
+lteNotEqLt : LTE n k -> Not (n=k) -> LT n k
+lteNotEqLt         {k=Z}    LTEZero      ctra = absurd $ ctra Refl
+lteNotEqLt         {k=S k}  LTEZero      ctra = LTESucc LTEZero
+lteNotEqLt {n=S n} {k=S k} (LTESucc lte) ctra = LTESucc $ lteNotEqLt lte (ctra . cong)
+
+islteRefl : (ltk ** isLTE k k = Yes ltk)
+islteRefl {k=Z}   = (LTEZero ** Refl)
+islteRefl {k=S k} = let (ltk**prf) = islteRefl {k} in (LTESucc ltk ** rewrite prf in Refl)
+
+minusSucc : LTE k n -> minus (S n) k = S (minus n k)
+minusSucc _             {n}     {k=Z}   = cong $ sym $ minusZeroRight n
+minusSucc (LTESucc lte) {n=S n} {k=S k} = minusSucc lte
+
+islteRight : LTE k n -> (ltk ** isLTE k (S n) = Yes ltk)
+islteRight {k} {n} lte with (isLTE k (S n))
+  | Yes lt = (lt ** Refl)
+  | No ctr = absurd $ ctr $ lteSuccRight lte
+
+
+islteLT : LT n k -> (ctra ** isLTE k n = No ctra)  
+islteLT {k} {n} lt with (isLTE k n)
+  | Yes lek = absurd $ notLteSucc $ lteTransitive lt lek
+  | No  gtk = (gtk ** Refl)
+
 -- lists  
+
+indexNone : {l : List a} -> LTE (length l) n -> index' n l = Nothing
+indexNone {l=[]}    {n=Z}   _   = Refl
+indexNone {l=[]}    {n=S _} _   = Refl
+indexNone {l=l::ls} {n=Z}   lte = absurd lte
+indexNone {l=l::ls} {n=S n} lte = indexNone $ fromLteSucc lte
+
+indexAll : All p xs -> index' k xs = Just y -> p y
+indexAll {k=Z}   []        prf = absurd prf
+indexAll {k=S k} []        prf = absurd prf
+indexAll {k=Z}   (x :: xs) prf = rewrite sym $ justInjective prf in x
+indexAll {k=S k} (x :: xs) prf = indexAll xs prf
 
 indexLtJust : (h : List a) -> (n : Nat) -> LT n (length h) -> (x : a ** index' n h = Just x)
 indexLtJust []         _    lt = absurd lt
@@ -38,6 +86,10 @@ indexMap (_ :: xs) f (S k) prf = indexMap xs f k prf
 allMap : (a : List x) -> (p : y -> Type) -> (f : x -> y) -> All (\x => p (f x)) a -> All p (map f a)
 allMap []        _ _  _        = []
 allMap (_ :: xs) p f (a :: as) = a :: allMap xs p f as
+
+elemAll : {p : a -> Type} -> (xs : List a) -> ({x : a} -> Elem x xs -> p x) -> All p xs
+elemAll []      f = []
+elemAll (x::xs) f = f Here :: elemAll xs (f . There)
 
 -- relations
 
