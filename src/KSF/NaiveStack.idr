@@ -18,21 +18,23 @@ data StepS : Label -> StateS -> StateS -> Type where
   StepSPushVal :                     StepS Tau  (LamT q p :: t, v)           (p :: t,      q :: v)
   StepSNil     :                     StepS Tau  (RetT :: t,     v)           (t,           v)
 
+Uninhabited (StepS _ ([], _) _) where
+  uninhabited (StepSBetaC _) impossible
+  uninhabited StepSPushVal impossible
+  uninhabited StepSNil     impossible
+
 Uninhabited (StepS Beta (_, []) _) where
   uninhabited (StepSBetaC _) impossible
 
 Uninhabited (StepS Beta (_, [_]) _) where
   uninhabited (StepSBetaC _) impossible
 
-Uninhabited (StepS Tau ([], _) _) where
-  uninhabited StepSPushVal impossible
-  uninhabited StepSNil     impossible
-
 Uninhabited (StepS Tau (AppT _ :: _, _) _) where
   uninhabited StepSPushVal impossible
   uninhabited StepSNil     impossible
 
-Uninhabited (StepS Tau (VarT _ _ :: _, _) _) where
+Uninhabited (StepS _ (VarT _ _ :: _, _) _) where
+  uninhabited (StepSBetaC _) impossible
   uninhabited StepSPushVal impossible
   uninhabited StepSNil     impossible
 

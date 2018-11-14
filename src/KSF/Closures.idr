@@ -10,7 +10,6 @@ import KSF.Programs
 
 data Clo = ClosC Pro (List Clo)
 
-
 minusLt : LTE k n -> LT n (k+m) -> LT (n `minus` k) m
 minusLt {k=Z}   {n}     lte lt = rewrite  minusZeroRight n in lt
 minusLt {k=S k} {n=Z}   lte lt = absurd lte

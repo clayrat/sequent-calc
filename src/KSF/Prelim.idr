@@ -46,7 +46,6 @@ islteRight {k} {n} lte with (isLTE k (S n))
   | Yes lt = (lt ** Refl)
   | No ctr = absurd $ ctr $ lteSuccRight lte
 
-
 islteLT : LT n k -> (ctra ** isLTE k n = No ctra)  
 islteLT {k} {n} lt with (isLTE k n)
   | Yes lek = absurd $ notLteSucc $ lteTransitive lt lek
@@ -77,11 +76,23 @@ indexJustLt []        (S _) prf = absurd prf
 indexJustLt (_ :: _)   Z    _   = LTESucc LTEZero
 indexJustLt (_ :: xs) (S k) prf = LTESucc (indexJustLt xs k prf)
 
+indexMapOf : (l : List a) -> (f : a -> b) -> (n : Nat) -> index' n l = Just x -> index' n (map f l) = Just (f x)
+indexMapOf []      _ Z     prf = absurd prf
+indexMapOf []      _ (S n) prf = absurd prf
+indexMapOf (l::ls) f Z     prf = cong {f=Just . f} $ justInjective prf
+indexMapOf (l::ls) f (S n) prf = indexMapOf ls f n prf
+
 indexMap : (h : List a) -> (f : a -> b) -> (n : Nat) -> index' n (map f h) = Just x -> (y ** (index' n h = Just y, x = f y))
 indexMap []        _  Z    prf = absurd prf
 indexMap []        _ (S _) prf = absurd prf
 indexMap (y :: _)  _  Z    prf = (y ** (Refl, sym $ justInjective prf))
 indexMap (_ :: xs) f (S k) prf = indexMap xs f k prf
+
+indexElem : index' n l = Just x -> Elem x l
+indexElem {l=[]}    {n=Z}   prf = absurd prf
+indexElem {l=[]}    {n=S n} prf = absurd prf
+indexElem {l=l::ls} {n=Z}   prf = rewrite justInjective prf in Here
+indexElem {l=l::ls} {n=S n} prf = There $ indexElem prf 
 
 allMap : (a : List x) -> (p : y -> Type) -> (f : x -> y) -> All (\x => p (f x)) a -> All p (map f a)
 allMap []        _ _  _        = []
