@@ -6,10 +6,6 @@ import KSF.Programs
 %access public export
 %default total
 
-indexMid : index' (length as) (as ++ b :: cs) = Just b
-indexMid {as=[]}    = Refl
-indexMid {as=_::as} = indexMid {as}
-
 data Com : Type -> Type where
   RetC :        Com pa
   VarC : Nat -> Com pa
@@ -112,3 +108,37 @@ fetch (VarT x p) = VarC x :: fetch p
 fetch (LamT q p) = 
   let cP = fetch p in
   LamC (1 + length cP) :: cP ++ fetch q
+
+fetchCorrect' : RepresentsPro S (phiNat (c1 ++ fetch p ++ c2)) (length c1) p
+fetchCorrect' {c1} {c2} {p=RetT}     = 
+  RPRet $ 
+    rewrite indexMid {as=c1} {b=RetC} {cs=c2} in Refl
+fetchCorrect' {c1} {c2} {p=VarT k x} = 
+  RPVar 
+    (rewrite indexMid {as=c1} {b=VarC k} {cs=fetch x ++ c2} in Refl) 
+    (rewrite consMid {as=c1} {b=VarC k} {bs=fetch x} {cs=c2} in 
+     rewrite sym $ lenPost {as=c1} {b=VarC k} in 
+     fetchCorrect' {c1=c1++[VarC k]} {p=x} {c2})
+fetchCorrect' {c1} {c2} {p=AppT x}   = 
+  RPApp
+    (rewrite indexMid {as=c1} {b=AppC} {cs=fetch x ++ c2} in Refl) 
+    (rewrite consMid {as=c1} {b=AppC} {bs=fetch x} {cs=c2} in 
+     rewrite sym $ lenPost {as=c1} {b=AppC} in 
+     fetchCorrect' {c1=c1++[AppC]} {p=x} {c2})
+fetchCorrect' {c1} {c2} {p=LamT x y} = 
+  RPLam
+    {q = length c1 + S (length (fetch y))}
+    (rewrite indexMid {as=c1} {b=LamC (S (length (fetch y)))} {cs=(fetch y ++ fetch x) ++ c2} in Refl)
+    (rewrite sym $ appendAssociative (fetch y) (fetch x) c2 in
+     rewrite consMid {as=c1} {b=LamC (S (length (fetch y)))} {bs=fetch y} {cs=fetch x ++ c2} in  
+     rewrite sym $ lenPost {as=c1} {b=LamC (S (length (fetch y)))} in  
+     fetchCorrect' {c1=c1++[LamC (S (length (fetch y)))]} {p=y} {c2=fetch x ++ c2})
+    (rewrite sym $ appendAssociative (fetch y) (fetch x) c2 in
+     rewrite appendAssociative c1 (LamC (S (length (fetch y))) :: fetch y) (fetch x ++ c2) in
+     rewrite sym $ lengthAppend c1 (LamC (S (length (fetch y))) :: fetch y) in
+     fetchCorrect' {c1=c1++LamC (S (length (fetch y))) :: fetch y} {p=x} {c2})
+
+fetchCorrect : RepresentsPro S (phiNat (fetch p)) 0 p
+fetchCorrect {p} = 
+  rewrite sym $ appendNilRightNeutral (fetch p) in 
+  fetchCorrect' {c1=[]} {c2=[]} {p}

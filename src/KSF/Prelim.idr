@@ -102,6 +102,19 @@ elemAll : {p : a -> Type} -> (xs : List a) -> ({x : a} -> Elem x xs -> p x) -> A
 elemAll []      f = []
 elemAll (x::xs) f = f Here :: elemAll xs (f . There)
 
+indexMid : index' (length as) (as ++ b :: cs) = Just b
+indexMid {as=[]}    = Refl
+indexMid {as=_::as} = indexMid {as}
+
+consMid : as ++ b :: bs ++ cs = (as ++ [b]) ++ bs ++ cs
+consMid {as=[]}    = Refl
+consMid {as=a::as} = cong consMid
+
+lenPost : length (as ++ [b]) = S (length as)
+lenPost {as} {b} = 
+  rewrite lengthAppend as [b] in 
+  plusCommutative (length as) 1
+
 -- relations
 
 rcomp : (r : a -> b -> Type) -> (s : b -> c -> Type) -> a -> c -> Type
