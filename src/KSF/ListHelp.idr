@@ -3,7 +3,7 @@ module KSF.ListHelp
 %access public export
 %default total
 
--- TODO add to Prelude
+-- TODO added to Prelude after 1.3.1
 Uninhabited ([] = _ :: _) where
     uninhabited Refl impossible
   

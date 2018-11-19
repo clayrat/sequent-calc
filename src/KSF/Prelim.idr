@@ -53,6 +53,12 @@ islteLT {k} {n} lt with (isLTE k n)
 
 -- lists  
 
+indexAppend : index' x l = Just y -> index' x (l++m) = Just y
+indexAppend {l=[]}    {x=Z}   prf = absurd prf
+indexAppend {l=[]}    {x=S x} prf = absurd prf
+indexAppend {l=l::ls} {x=Z}   prf = prf
+indexAppend {l=l::ls} {x=S x} prf = indexAppend {l=ls} {x} prf
+
 indexNone : {l : List a} -> LTE (length l) n -> index' n l = Nothing
 indexNone {l=[]}    {n=Z}   _   = Refl
 indexNone {l=[]}    {n=S _} _   = Refl
@@ -114,6 +120,11 @@ lenPost : length (as ++ [b]) = S (length as)
 lenPost {as} {b} = 
   rewrite lengthAppend as [b] in 
   plusCommutative (length as) 1
+
+-- maybe
+
+notNothingIsJust : m = Just x -> Not (m = Nothing)
+notNothingIsJust prf cprf = absurd $ trans (sym cprf) prf
 
 -- relations
 
