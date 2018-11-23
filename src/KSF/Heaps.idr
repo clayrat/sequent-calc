@@ -50,10 +50,53 @@ representsEnvExtend : (hi : Heap pa ha hp) =>
                       ({x : ha} -> Not (get @{hi} h x = Nothing) -> get @{hi} h x = get @{hi} h1 x) 
                    -> RepresentsEnv inc phi (get @{hi} h) a e 
                    -> RepresentsEnv inc phi (get @{hi} h1) a e
-representsEnvExtend {a} ext (RENil prf)              = RENil $ rewrite sym $ ext {x=a} (notNothingIsJust prf) in prf
+representsEnvExtend {a}          ext (RENil prf)                          = 
+  RENil $ rewrite sym $ ext {x=a} (notNothingIsJust prf) in prf
 representsEnvExtend {a} {h} {h1} ext (RECons {q} {b} {c} prf rpq ref ree) = 
   RECons {q}
     (rewrite sym $ ext {x=a} (notNothingIsJust prf) in prf)
     rpq
     (representsEnvExtend {a=b} {h} {h1} ext ref)
     (representsEnvExtend {a=c} {h} {h1} ext ree)
+
+data RepresentsClos : pa -> ha -> (ha -> Maybe (Maybe ((pa, ha), ha))) -> Clo -> Type where
+  RCC : RepresentsPro inc phi p q -> RepresentsEnv inc phi h a e -> RepresentsClos p a h (ClosC q e)
+
+representsClosExtend : (hi : Heap pa ha hp) => 
+                       ({x : ha} -> Not (get @{hi} h x = Nothing) -> get @{hi} h x = get @{hi} h1 x) 
+                     -> RepresentsClos p a (get @{hi} h) e 
+                     -> RepresentsClos p a (get @{hi} h1) e 
+representsClosExtend ext {h} {h1} (RCC {inc} {phi} rcq ree) = 
+  RCC {inc} {phi} rcq $ 
+    representsEnvExtend {h} {h1} ext ree 
+
+lookup : (ha -> Maybe (Maybe ((pa, ha), ha))) -> ha -> Nat -> Maybe (pa, ha)
+lookup h a n with (h a)
+  | Just (Just (g,b)) = case n of 
+      Z   => Just g
+      S n => assert_total $ lookup h b n
+  | _ = Nothing
+
+indexUnlinedEnv : RepresentsEnv inc phi h a e -> index' n e = Just g -> (j ** b ** (lookup h a n = Just (j, b), RepresentsClos j b h g))
+indexUnlinedEnv {n=Z}   {e=[]}             _                             prfi = absurd prfi
+indexUnlinedEnv {n=Z}   {e=ClosC p f::_}  (RECons {q} {b} prf rpq ref _) prfi = 
+  rewrite prf in 
+  (q ** b ** (Refl, rewrite sym $ justInjective prfi in RCC rpq ref))
+indexUnlinedEnv {n=S n} {e=[]}             _                             prfi = absurd prfi
+indexUnlinedEnv {n=S n} {e=ClosC p f::es} (RECons prf _ _ ree)           prfi = 
+  rewrite prf in 
+  indexUnlinedEnv ree prfi
+
+lookupUnlinedEnv : RepresentsEnv inc phi h a e -> lookup h a n = Just (j, b) -> (g ** (index' n e = Just g, RepresentsClos j b h g))  
+lookupUnlinedEnv {n=Z}   {e=[]}            (RENil prf)            = 
+  rewrite prf in 
+  absurd
+lookupUnlinedEnv {n=Z}   {e=ClosC p f::es} (RECons prf rpq ref _) = 
+  rewrite prf in 
+  \Refl => (ClosC p f ** (Refl, RCC rpq ref))
+lookupUnlinedEnv {n=S n} {e=[]}            (RENil prf)            = 
+  rewrite prf in 
+  absurd
+lookupUnlinedEnv {n=S n} {e=ClosC p f::es} (RECons prf _ _ ree)   = 
+  rewrite prf in 
+  lookupUnlinedEnv ree
