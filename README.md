@@ -11,3 +11,4 @@ Experiments with sequent calculi and abstract machines
   * https://bitbucket.org/sergei.romanenko/agda-krivine-machine/
 * https://github.com/freebroccolo/agda-syntactic-duploids/  
 * [Kunze, Smolka, Forster, "Formal Small-step Verification of a Call-by-value Lambda Calculus Machine"](https://arxiv.org/abs/1806.03205)
+* https://github.com/freebroccolo/substitutions/
