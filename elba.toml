@@ -1,0 +1,14 @@
+[package]
+name = "clayrat/sequent-calc"
+version = "0.1.0"
+authors = ["Alex Gryzlov"]
+description = "Experiments with sequent calculi and abstract machine"
+
+[dependencies]
+"gallais/idris-tparsec" = { git = "https://github.com/gallais/idris-tparsec" }
+
+[[targets.bin]]
+path = "src"
+name = "levy"
+main = "Levy"
+idris_opts = ["-p","contrib"]
