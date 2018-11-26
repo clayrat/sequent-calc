@@ -30,6 +30,21 @@ mutual
     Up : Ren m (S m)
     Rw : Ren m n -> Ren (S m) (S n)
 
+V0 : Tm (S n)
+V0 = Var FZ
+
+V1 : Tm (2+n)
+V1 = Var $ FS FZ
+
+V2 : Tm (3+n)
+V2 = Var $ FS $ FS FZ
+
+V3 : Tm (4+n)
+V3 = Var $ FS $ FS $ FS FZ
+
+V4 : Tm (5+n)
+V4 = Var $ FS $ FS $ FS $ FS FZ
+
 Clo : Type
 Clo = Tm 0    
 
@@ -55,7 +70,7 @@ mutual
   intSub (_::t) (FS i) = intSub t i
   intSub []        i     = absurd i
   intSub  I        i     = Var i
-  intSub (Sw _)    FZ    = Var FZ 
+  intSub (Sw _)    FZ    = V0
   intSub (Sw s)   (FS i) = intHomR Up (intSub s i)
   
   intHomR : Ren m n -> Hom m n
@@ -116,28 +131,28 @@ run = map resolve . whnf
 -- Church
 
 ff : Clo
-ff = Lam $ Lam $ Var FZ
+ff = Lam $ Lam V0
 
 tt : Clo
-tt = Lam $ Lam $ Var $ FS FZ
+tt = Lam $ Lam V1
 
 not : Clo
-not = Lam $ App (App (Var FZ) (Esb (MkExp ff []))) (Esb (MkExp tt []))
+not = Lam $ App (App V0 (Esb $ MkExp ff [])) (Esb $ MkExp tt [])
 
 and : Clo
-and = Lam $ Lam $ App (App (Var $ FS FZ) (Var FZ)) (Var $ FS FZ)
+and = Lam $ Lam $ App (App V1 V0) V1
 
 or : Clo
-or = Lam $ Lam $ App (App (Var $ FS FZ) (Var $ FS FZ)) (Var FZ) 
+or = Lam $ Lam $ App (App V1 V1) V0 
 
 xor : Clo
-xor = Lam $ Lam $ App (App (Var $ FS FZ) $ App (Esb (MkExp not [])) (Var FZ)) (Var FZ) 
+xor = Lam $ Lam $ App (App V1 $ App (Esb $ MkExp not []) V0) V0 
 
 eq : Clo
-eq = Lam $ Lam $ App (Esb (MkExp not [])) $ App (App (Esb (MkExp xor [])) (Var $ FS FZ)) (Var FZ) 
+eq = Lam $ Lam $ App (Esb $ MkExp not []) $ App (App (Esb $ MkExp xor []) V1) V0
 
 ifc : Clo
-ifc = Lam $ Lam $ Lam $ App (App (Var $ FS $ FS FZ) (Var $ FS FZ)) (Var FZ) 
+ifc = Lam $ Lam $ Lam $ App (App V2 V1) V0
 
 ex0 : Clo
 ex0 = App (App and tt) ff
@@ -152,15 +167,15 @@ ex3 : Clo
 ex3 = App (App eq tt) ff
 
 omega : Clo
-omega = App (Lam $ App (Var FZ) (Var FZ)) (Lam $ App (Var FZ) (Var FZ))
+omega = App (Lam $ App V0 V0) (Lam $ App V0 V0)
 
 ex3Red0 : Clo
 ex3Red0 = Esb $ MkExp ff $ 
-                      Ss (Ss Defun.I ( (Esb (MkExp (App (App (Esb (MkExp xor [])) (Var $ FS FZ)) (Var FZ)) 
-                                                   ((Esb (MkExp ff I)) :: (Esb (MkExp tt I)) :: I) 
-                                       )) :: 
-                                       (Ss ((Esb (MkExp Defun.ff I)) :: (Esb (MkExp tt I)) :: I) [])
-                                     )
+                      Ss (Ss I ( (Esb (MkExp (App (App (Esb $ MkExp xor []) V1) V0) 
+                                             ((Esb $ MkExp ff I) :: (Esb $ MkExp tt I) :: I) 
+                                 )) :: 
+                                 (Ss ((Esb $ MkExp ff I) :: (Esb $ MkExp tt I) :: I) [])
+                               )
                          ) []
 
 ex3Eq0 : whnf Defun.ex3 = Just Defun.ex3Red0
@@ -168,3 +183,96 @@ ex3Eq0 = Refl
 
 ex3Eq1 : run Defun.ex3 = Just Defun.ff
 ex3Eq1 = Refl
+
+-- Cooked
+
+false : Clo
+false = Lam $ Lam $ V1
+
+true : Clo
+true = Lam $ Lam $ V0
+
+if2 : Clo
+if2 = Lam $ Lam $ Lam $ App (App V2 V0) V1
+
+zero : Clo
+zero = Lam $ Lam $ V1
+
+succ : Clo
+succ = Lam $ Lam $ Lam $ App V0 V2
+
+one : Clo 
+one = App succ zero
+
+two : Clo 
+two = App succ one
+
+three : Clo
+three = App succ two
+
+isZero : Clo
+isZero = Lam $ App (App V0 (Esb $ MkExp true [])) (Lam $ Esb $ MkExp false [])
+
+const : Clo
+const = Lam $ Lam $ V1
+
+pair : Clo
+pair = Lam $ Lam $ Lam $ App (App V0 V2) V1
+
+fstc : Clo
+fstc = Lam $ App V0 (Lam $ Lam $ V1)
+
+sndc : Clo
+sndc = Lam $ App V0 (Lam $ Lam $ V0)
+
+fix : Clo
+fix = Lam $ App (Lam $ App V1 $ App V0 V0) (Lam $ App V1 $ App V0 V0)
+
+add : Clo
+add = App fix $ Lam $ Lam $ Lam $ App (App V1 V0) (Lam $ App (Esb $ MkExp succ []) (App (App V3 V0) V1))
+
+mul : Clo
+mul = App fix $ Lam $ Lam $ Lam $ App (App V1 (Esb $ MkExp zero [])) (Lam $ App (App (Esb $ MkExp add []) V1) (App (App V3 V0) V1))
+
+fac : Clo
+fac = App fix $ Lam $ Lam $ App (App V0 (Esb $ MkExp one [])) (Lam $ App (App (Esb $ MkExp mul []) V1) (App V2 V0))
+
+eqnat : Clo
+eqnat = App fix $ 
+            Lam $ Lam $ Lam $ App (App V1 
+                                       (App (App V0 (Esb $ MkExp true [])) (Esb $ MkExp (App const false) []))) 
+                                  (Lam $ App (App V1 (Esb $ MkExp false [])) (Lam $ App (App V4 V1) V0))
+
+sumto : Clo
+sumto = App fix $ Lam $ Lam $ App (App V0 (Esb $ MkExp zero [])) (Lam $ App (App (Esb $ MkExp add []) V1) (App V2 V0))
+
+n5 : Clo
+n5 = App (App add two) three
+
+n6 : Clo
+n6 = App (App add three) three
+
+test : Clo
+test = App (App eqnat n5) n6
+
+testEq : run Defun.test = Just Defun.false
+testEq = Refl
+
+{-
+-- takes too long
+
+n17 : Clo
+n17 = App (App add n6) (App (App add n6) n5)
+
+n37 : Clo
+n37 = App succ (App (App mul n6) n6)
+
+n703 : Clo
+n703 = App sumto n37
+
+n720 : Clo
+n720 = App fac n6
+
+test : Clo
+test = App (App eqnat (App (App mul three) n6)) (App (App add one) n17)
+-}
