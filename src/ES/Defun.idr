@@ -19,12 +19,12 @@ mutual
     es : Sub len n
 
   data Sub : Nat -> Nat -> Type where
-    R  : Ren n o -> Sub m n -> Sub m o
-    S  : Sub n o -> Sub m n -> Sub m o
+    Rs   : Ren n o -> Sub m n -> Sub m o
+    Ss   : Sub n o -> Sub m n -> Sub m o
     (::) : Tm n -> Sub m n -> Sub (S m) n
-    Nil : Sub 0 m
-    I  : Sub m m
-    Sw : Sub m n -> Sub (S m) (S n)
+    Nil  : Sub 0 m
+    I    : Sub m m
+    Sw   : Sub m n -> Sub (S m) (S n)
 
   data Ren : Nat -> Nat -> Type where
     Up : Ren m (S m)
@@ -49,8 +49,8 @@ intRen (Rw r) (FS i) = FS $ intRen r i
 
 mutual 
   intSub : Sub m n -> IntSub m n
-  intSub (R s t)   i     = intHomR s (intSub t i)
-  intSub (S s t)   i     = assert_total $ intHomS s (intSub t i)
+  intSub (Rs s t)  i     = intHomR s (intSub t i)
+  intSub (Ss s t)  i     = assert_total $ intHomS s (intSub t i)
   intSub (e::_)  FZ    = e
   intSub (_::t) (FS i) = intSub t i
   intSub []        i     = absurd i
@@ -62,13 +62,13 @@ mutual
   intHomR r (Var i)             = Var $ intRen r i
   intHomR r (Lam e)             = Lam $ intHomR (Rw r) e
   intHomR r (App e0 e1)         = App (intHomR r e0) (intHomR r e1)
-  intHomR r (Esb (MkExp et es)) = Esb $ MkExp et (R r es)
+  intHomR r (Esb (MkExp et es)) = Esb $ MkExp et (Rs r es)
 
   intHomS : Sub m n -> Hom m n
   intHomS s (Var i)             = intSub s i
   intHomS s (Lam e)             = Lam $ intHomS (Sw s) e
   intHomS s (App e0 e1)         = App (intHomS s e0) (intHomS s e1)
-  intHomS s (Esb (MkExp et es)) = Esb $ MkExp et (S s es)
+  intHomS s (Esb (MkExp et es)) = Esb $ MkExp et (Ss s es)
 
 resolve : Tm m -> Tm m
 resolve (Var i)             = Var i
@@ -98,7 +98,7 @@ step (MkKAM (MkExp (Var i)             as)     xs ) = Just $ MkKAM (MkExp (intSu
 step (MkKAM (MkExp (Lam _)             _ )     [] ) = Nothing
 step (MkKAM (MkExp (Lam e)             as) (x::xs)) = Just $ MkKAM (MkExp e (x::as)) xs
 step (MkKAM (MkExp (App e0 e1)         as)     xs ) = Just $ MkKAM (MkExp e0 as) (Esb (MkExp e1 as) :: xs)
-step (MkKAM (MkExp (Esb (MkExp et es)) as)     xs ) = Just $ MkKAM (MkExp et (S as es)) xs
+step (MkKAM (MkExp (Esb (MkExp et es)) as)     xs ) = Just $ MkKAM (MkExp et (Ss as es)) xs
 
 iter : Krivine m -> Maybe (Krivine m)
 iter st@(MkKAM (MkExp (Var i) as) _) = case intSub as i of 
@@ -156,12 +156,12 @@ omega = App (Lam $ App (Var FZ) (Var FZ)) (Lam $ App (Var FZ) (Var FZ))
 
 ex3Red0 : Clo
 ex3Red0 = Esb $ MkExp ff $ 
-                      S (S Defun.I ( (Esb (MkExp (App (App (Esb (MkExp xor [])) (Var $ FS FZ)) (Var FZ)) 
-                                                 ((Esb (MkExp ff I)) :: (Esb (MkExp tt I)) :: I) 
-                                     )) :: 
-                                     (S ((Esb (MkExp Defun.ff I)) :: (Esb (MkExp tt I)) :: I) [])
-                                   )
-                        ) []
+                      Ss (Ss Defun.I ( (Esb (MkExp (App (App (Esb (MkExp xor [])) (Var $ FS FZ)) (Var FZ)) 
+                                                   ((Esb (MkExp ff I)) :: (Esb (MkExp tt I)) :: I) 
+                                       )) :: 
+                                       (Ss ((Esb (MkExp Defun.ff I)) :: (Esb (MkExp tt I)) :: I) [])
+                                     )
+                         ) []
 
 ex3Eq0 : whnf Defun.ex3 = Just Defun.ex3Red0
 ex3Eq0 = Refl
