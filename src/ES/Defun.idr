@@ -51,10 +51,11 @@ mutual
   intSub : Sub m n -> IntSub m n
   intSub (R s t)   i     = intHomR s (intSub t i)
   intSub (S s t)   i     = assert_total $ intHomS s (intSub t i)
-  intSub (Cs e t)  i     = e
+  intSub (Cs e _)  FZ    = e
+  intSub (Cs _ t) (FS i) = intSub t i
   intSub  Nl       i     = absurd i
   intSub  I        i     = Var i
-  intSub (Sw s)    FZ    = Var FZ 
+  intSub (Sw _)    FZ    = Var FZ 
   intSub (Sw s)   (FS i) = intHomR Up (intSub s i)
   
   intHomR : Ren m n -> Hom m n
@@ -94,7 +95,7 @@ from _                             = Nothing
 
 step : Krivine m -> Maybe (Krivine m)
 step (MkKAM (MkExp (Var i)             as)     xs ) = Just $ MkKAM (MkExp (intSub as i) I) xs
-step (MkKAM (MkExp (Lam e)             as)     [] ) = Nothing
+step (MkKAM (MkExp (Lam _)             _ )     [] ) = Nothing
 step (MkKAM (MkExp (Lam e)             as) (x::xs)) = Just $ MkKAM (MkExp e (Cs x as)) xs
 step (MkKAM (MkExp (App e0 e1)         as)     xs ) = Just $ MkKAM (MkExp e0 as) (Esb (MkExp e1 as) :: xs)
 step (MkKAM (MkExp (Esb (MkExp et es)) as)     xs ) = Just $ MkKAM (MkExp et (S as es)) xs
@@ -109,6 +110,9 @@ iter st@_ = assert_total $ step st >>= iter
 whnf : Tm m -> Maybe (Tm m)
 whnf e = iter (into e) >>= from
 
+run : Tm m -> Maybe (Tm m)
+run = map resolve . whnf 
+
 -- Church
 
 ff : Clo
@@ -118,11 +122,51 @@ tt : Clo
 tt = Lam $ Lam $ Var $ FS FZ
 
 not : Clo
-not = Lam $ App (Var FZ) $ App (Esb (MkExp ff Nl)) (Esb (MkExp tt Nl))
+not = Lam $ App (App (Var FZ) (Esb (MkExp ff Nl))) (Esb (MkExp tt Nl))
 
 and : Clo
-and = Lam $ Lam $ App (Var $ FS FZ) $ App (Var FZ) (Var $ FS FZ)
+and = Lam $ Lam $ App (App (Var $ FS FZ) (Var FZ)) (Var $ FS FZ)
 
---- 
+or : Clo
+or = Lam $ Lam $ App (App (Var $ FS FZ) (Var $ FS FZ)) (Var FZ) 
+
+xor : Clo
+xor = Lam $ Lam $ App (App (Var $ FS FZ) $ App (Esb (MkExp not Nl)) (Var FZ)) (Var FZ) 
+
+eq : Clo
+eq = Lam $ Lam $ App (Esb (MkExp not Nl)) $ App (App (Esb (MkExp xor Nl)) (Var $ FS FZ)) (Var FZ) 
+
+ifc : Clo
+ifc = Lam $ Lam $ Lam $ App (App (Var $ FS $ FS FZ) (Var $ FS FZ)) (Var FZ) 
+
+ex0 : Clo
+ex0 = App (App and tt) ff
+
+ex1 : Clo
+ex1 = App (App or tt) ff
+
+ex2 : Clo
+ex2 = App (App eq tt) tt
+
+ex3 : Clo
+ex3 = App (App eq tt) ff
+
 omega : Clo
 omega = App (Lam $ App (Var FZ) (Var FZ)) (Lam $ App (Var FZ) (Var FZ))
+
+ex3Red0 : Clo
+ex3Red0 = Esb $ MkExp ff $ 
+                      S (S I (Cs (Esb (MkExp (App (App (Esb (MkExp xor Nl)) (Var $ FS FZ)) (Var FZ)) 
+                                             (Cs (Esb (MkExp ff I)) 
+                                                 (Cs (Esb (MkExp tt I)) 
+                                                      I)))) 
+                                 (S (Cs (Esb (MkExp ff I)) 
+                                        (Cs (Esb (MkExp tt I)) 
+                                             I)) Nl))) Nl
+
+ex3Eq0 : whnf Defun.ex3 = Just Defun.ex3Red0
+ex3Eq0 = Refl
+
+ex3Eq1 : run Defun.ex3 = Just Defun.ff
+ex3Eq1 = Refl
+
