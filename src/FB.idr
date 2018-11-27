@@ -22,6 +22,7 @@ Var RH = GT
 mutual
   data Cmd : (m, n, o, p : Nat) -> Type where
     MkCmd : Exp m n o p pol -> Ctx m n o p pol -> Cmd m n o p
+--  MkCmd : Exp x n y p pol -> Ctx m x o y pol -> Cmd m n o p
 
   data Val : (m, n, o, p : Nat) -> Type where
     VarV : Var RH m n                 -> Val m n o p
@@ -94,9 +95,22 @@ mutual
   plu LH RH i =   i
   plu RH RH i = S i
 
+{-  
+-- TODO can't define this, coverage checker seems to have a bug
+
+shl : Tel LH x n -> Tel LH m x -> Tel LH m n
+shl  ZT          t2 = t2
+shl (CT LH a t1) t2 = CT LH a (shl t1 t2)
+
+shr : Tel RH x n -> Tel RH m x -> Tel RH m n
+shr t1  ZT          = t1
+shr t1 (CT RH t2 a) = CT RH (shr t1 t2) a
+-}
+
 mutual
   data CmdT : (c : Cmd m n o p) -> (g : Tel RH m n) -> (d : Tel LH o p) -> Type where
     MkCmdT : ExpT g v a d -> CtxT g e a d -> CmdT (MkCmd v e) g d
+--  MkCmdT : ExpT g0 v a d0 -> CtxT g1 e a d1 -> CmdT (MkCmd v e) (shr g0 g1) (shr d0 d1)
 
   data ValT : (g : Tel RH m n) -> (vp : Val m n o p) -> (tp : Tp Pos) -> (d : Tel LH o p) -> Type where
     VarVT : (xp : Var RH (S m) n)                -> ValT (CT RH g tp) (VarV xp)     tp              d
