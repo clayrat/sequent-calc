@@ -40,6 +40,21 @@ mutual
     I    : Sub s s
     Sw   : Sub s t -> Sub (S s) (S t)
 
+V0 : Ob (S n)
+V0 = Var FZ
+
+V1 : Ob (2+n)
+V1 = Var $ FS FZ
+
+V2 : Ob (3+n)
+V2 = Var $ FS $ FS FZ
+
+V3 : Ob (4+n)
+V3 = Var $ FS $ FS $ FS FZ
+
+V4 : Ob (5+n)
+V4 = Var $ FS $ FS $ FS $ FS FZ
+
 wk : Ob 0 -> Ob s
 wk e = Esb $ MkExp [] e
 
@@ -84,7 +99,7 @@ res (Var i)           = Var i
 res (Pi e0 e1)        = Pi (res e0) (res e1)
 res (Lam e)           = Lam (res e)
 res (App e0 e1)       = App (res e0) (res e1)
-res (Esb (MkExp r e)) = assert_total $ res (sub r e)  
+res (Esb (MkExp r e)) = assert_total $ res (sub r e)
 
 Stack : Shape -> Type
 Stack s = List (Ob s)
@@ -117,3 +132,75 @@ canon : Ob s -> Bool
 canon (Pi _ _) = True
 canon (Lam _)  = True
 canon _        = False
+
+iter : Machine s -> Machine s
+iter i@(MkMach (MkExp r e)     []) = if canon e then i else assert_total $ iter (step i)
+iter   (MkMach (MkExp r (Var i)) xs) with (index r i)
+  | Var j = MkMach (MkExp I (Var j)) xs
+  | e = assert_total $ iter $ MkMach (MkExp I e) xs
+iter i = assert_total $ iter (step i)
+
+reify : Machine s -> Ob s
+reify g = res (from (iter g))
+
+whnf : Ob s -> Ob s
+whnf e = reify (reflect e)
+
+-- Cooked
+
+false : Ob Z
+false = Lam $ Lam $ V1
+
+true : Ob Z
+true = Lam $ Lam $ V0
+
+if2 : Ob Z
+if2 = Lam $ Lam $ Lam $ App (App V2 V0) V1
+
+zero : Ob Z
+zero = Lam $ Lam $ V1
+
+succ : Ob Z
+succ = Lam $ Lam $ Lam $ App V0 V2
+
+one : Ob Z 
+one = App succ zero
+
+two : Ob Z 
+two = App succ one
+
+three : Ob Z
+three = App succ two
+
+const : Ob Z
+const = Lam $ Lam $ V1
+
+fix : Ob Z
+fix = Lam $ App (Lam $ App V1 $ App V0 V0) (Lam $ App V1 $ App V0 V0)
+
+add : Ob Z
+add = App fix $ Lam $ Lam $ Lam $ App (App V1 V0) (Lam $ App (wk succ) (App (App V3 V0) V1))
+
+mul : Ob Z
+mul = App fix $ Lam $ Lam $ Lam $ App (App V1 (wk zero)) (Lam $ App (App (wk add) V1) (App (App V3 V0) V1))
+
+eqnat : Ob Z
+eqnat = App fix $ 
+            Lam $ Lam $ Lam $ App (App V1 
+                                       (App (App V0 (wk true)) (wk (App const false)))) 
+                                  (Lam $ App (App V1 (wk false)) (Lam $ App (App V4 V1) V0))
+
+n5 : Ob Z
+n5 = App (App add two) three
+
+n6 : Ob Z
+n6 = App (App add three) three
+
+n17 : Ob Z
+n17 = App (App add n6) (App (App add n6) n5)
+
+n37 : Ob Z
+n37 = App succ (App (App mul n6) n6)
+
+test : Ob Z
+test = App (App eqnat (App (App mul three) n6)) (App (App add one) n17)
