@@ -29,7 +29,17 @@ modules = MuMuTilde
         , Duploid
 
         , KSF.Prelim
+        , KSF.ListHelp
         , KSF.Lambda
+        , KSF.Refinements
         , KSF.Programs
+        , KSF.NaiveStack
+        , KSF.Closures
+        , KSF.ClosMachine
+        , KSF.Codes
+        , KSF.Heaps
+
+        , ES.Defun
+        , ES.LF
 
 opts = "-p contrib -p tparsec"

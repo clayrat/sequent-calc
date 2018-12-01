@@ -5,6 +5,10 @@ import Data.Fin
 %access public export
 %default total
 
+data Ren : Nat -> Nat -> Type where
+  Up : Ren m (S m)
+  Rw : Ren m n -> Ren (S m) (S n)
+
 mutual
   data Tm : Nat -> Type where
     Var : Fin n -> Tm n
@@ -25,10 +29,6 @@ mutual
     Nil  : Sub 0 m
     I    : Sub m m
     Sw   : Sub m n -> Sub (S m) (S n)
-
-  data Ren : Nat -> Nat -> Type where
-    Up : Ren m (S m)
-    Rw : Ren m n -> Ren (S m) (S n)
 
 V0 : Tm (S n)
 V0 = Var FZ
