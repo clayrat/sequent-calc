@@ -12,3 +12,4 @@ Experiments with sequent calculi and abstract machines
 * https://github.com/freebroccolo/agda-syntactic-duploids/  
 * [Kunze, Smolka, Forster, "Formal Small-step Verification of a Call-by-value Lambda Calculus Machine"](https://arxiv.org/abs/1806.03205)
 * https://github.com/freebroccolo/substitutions/
+* https://github.com/maciej-bendkowski/combinatorics-of-explicit-substitutions/
