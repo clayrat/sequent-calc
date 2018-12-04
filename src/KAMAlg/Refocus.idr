@@ -1,8 +1,8 @@
-module Krivine.Algebra.Refocus
+module KAMAlg.Refocus
 
-import Krivine.Algebra.Terms
-import Krivine.Algebra.Redex
-import Krivine.Algebra.Iterated
+import KAMAlg.Terms
+import KAMAlg.Redex
+import KAMAlg.Iterated
 
 %access public export
 %default total

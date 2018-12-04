@@ -11,7 +11,8 @@ modules = MuMuTilde
         , MuMuTilde.Rea2bis
         , MuMuTilde.Rea4bis
         
-        , FB
+        , SeqCalc
+        , Duploid
 
         , Levy
         , Levy.Syntax
@@ -26,8 +27,6 @@ modules = MuMuTilde
         , Krivine.Algebra.Refocus
         , Krivine.Algebra.Machine
 
-        , Duploid
-
         , KSF.Prelim
         , KSF.ListHelp
         , KSF.Lambda
@@ -38,8 +37,13 @@ modules = MuMuTilde
         , KSF.ClosMachine
         , KSF.Codes
         , KSF.Heaps
+        , KSF.HeapMachine
 
         , ES.Defun
         , ES.LF
+        , ES.Multi
+        , ES.LambdaUpsilon
+
+        , ABS.L
 
 opts = "-p contrib -p tparsec"

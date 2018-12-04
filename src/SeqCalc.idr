@@ -1,4 +1,4 @@
-module FB
+module SeqCalc
 
 -- port of https://github.com/freebroccolo/sequent-calculus/blob/master/src/Calculus.agda
 

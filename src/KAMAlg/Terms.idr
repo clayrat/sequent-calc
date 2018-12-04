@@ -1,4 +1,4 @@
-module Krivine.Algebra.Terms
+module KAMAlg.Terms
 
 %access public export
 %default total

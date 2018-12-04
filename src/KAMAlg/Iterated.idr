@@ -1,7 +1,7 @@
-module Krivine.Algebra.Iterated
+module KAMAlg.Iterated
 
-import Krivine.Algebra.Terms
-import Krivine.Algebra.Redex
+import KAMAlg.Terms
+import KAMAlg.Redex
 
 %access public export
 %default total

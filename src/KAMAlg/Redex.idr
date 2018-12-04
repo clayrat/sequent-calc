@@ -1,6 +1,6 @@
-module Krivine.Algebra.Redex
+module KAMAlg.Redex
 
-import Krivine.Algebra.Terms
+import KAMAlg.Terms
 
 %access public export
 %default total
