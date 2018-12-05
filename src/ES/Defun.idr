@@ -187,16 +187,16 @@ ex3Eq1 = Refl
 -- Cooked
 
 false : Clo
-false = Lam $ Lam $ V1
+false = Lam $ Lam V1
 
 true : Clo
-true = Lam $ Lam $ V0
+true = Lam $ Lam V0
 
 if2 : Clo
 if2 = Lam $ Lam $ Lam $ App (App V2 V0) V1
 
 zero : Clo
-zero = Lam $ Lam $ V1
+zero = Lam $ Lam V1
 
 succ : Clo
 succ = Lam $ Lam $ Lam $ App V0 V2
@@ -220,10 +220,10 @@ pair : Clo
 pair = Lam $ Lam $ Lam $ App (App V0 V2) V1
 
 fstc : Clo
-fstc = Lam $ App V0 (Lam $ Lam $ V1)
+fstc = Lam $ App V0 (Lam $ Lam V1)
 
 sndc : Clo
-sndc = Lam $ App V0 (Lam $ Lam $ V0)
+sndc = Lam $ App V0 (Lam $ Lam V0)
 
 fix : Clo
 fix = Lam $ App (Lam $ App V1 $ App V0 V0) (Lam $ App V1 $ App V0 V0)
