@@ -6,7 +6,7 @@ import Control.Monad.State
 %default total
 %access public export
 
-pop : (Alternative m, Monad m) => List a -> m (a, List a)
+pop : Alternative m => List a -> m (a, List a)
 pop []      = empty
 pop (x::xs) = pure (x, xs)
 

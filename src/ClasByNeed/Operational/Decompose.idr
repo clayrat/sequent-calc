@@ -23,7 +23,7 @@ recomp  MEmpty        c' = c'
 recomp (MLet k a c x) c' = recomp k (C (Mu a c) (Mut x c'))
 
 continue : Eq x => MetaContext x a -> Decomposition x a -> Decomposition x a       
-continue MEmpty          w = w
+continue  MEmpty          w                = w
 continue (MLet k a c1 x) (Answer y t b k') = continue k (Answer y t b k')
 continue (MLet k a c1 x) (Rdx r k')        = continue k (Rdx r k')
 continue (MLet k a c1 x) (Need y f d)      = 

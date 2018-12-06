@@ -31,8 +31,8 @@ data Redex x a = Beta x (Term x a) (Term x a) (CoValue x a)
                | FLetVal (Value x a) x (Force x a) (Environment x a)
                | ForceLet a (Command x a) x (Demanded x a) (Force x a)
 
-partial
-contract : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Redex a a -> Value a (Command a a)                           
+covering
+contract : (Eq a, Alternative m, MonadState (List a) m) => Redex a a -> m (Command a a)                           
 contract (Beta x t u e)       = 
   do x' <- fresh
      let t' = t /// x := x'

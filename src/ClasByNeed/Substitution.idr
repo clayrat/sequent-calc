@@ -4,6 +4,7 @@ import Control.Monad.State
 import ClasByNeed.Identifier
 import ClasByNeed.Syntax
 
+%default covering
 %access public export
 
 data Subst a b = Sub a b
@@ -17,7 +18,9 @@ matchBind : Eq x => Binding x a -> Subst x b -> Bool
 matchBind (Bind x _ _) (Sub y _) = x == y
 
 total
-under : Eq a => (con : a -> c -> d) -> a -> (sub : c -> Subst a b -> c) -> c -> Subst a b -> d
+under : Eq a => (con : a -> c -> d) -> a 
+             -> (sub : c -> Subst a b -> c) -> c 
+             -> Subst a b -> d
 under con x sub m s@(Sub y _) = 
   if (x == y) 
     then con x m
@@ -25,7 +28,10 @@ under con x sub m s@(Sub y _) =
 
 total
 under' : (Eq a, Alternative m, MonadState (List a) m) => 
-         (con : a -> t -> b) -> a -> (sub : s -> Subst a c -> m t) -> (ren : t -> Subst a a -> s) -> t -> Subst a c -> m b
+         (con : a -> t -> b) -> a 
+      -> (sub : s -> Subst a c -> m t) 
+      -> (ren : t -> Subst a a -> s) -> t 
+      -> Subst a c -> m b
 under' con x sub ren m s@(Sub y _) = 
   if (x == y) 
     then pure (con x m) 
@@ -33,7 +39,10 @@ under' con x sub ren m s@(Sub y _) =
             con x' <$> sub (ren m (x := x')) s
 
 total
-under2 : Eq a => (con : a -> c -> d -> p) -> a -> (sub1 : c -> Subst a b -> c) -> c -> (sub2 : d -> Subst a b -> d) -> d -> Subst a b -> p                       
+under2 : Eq a => (con : a -> c -> d -> p) -> a 
+              -> (sub1 : c -> Subst a b -> c) -> c 
+              -> (sub2 : d -> Subst a b -> d) -> d 
+              -> Subst a b -> p                       
 under2 con x sub1 m1 sub2 m2 s@(Sub y _) =
   if (x == y) 
     then con x m1 m2
@@ -95,8 +104,8 @@ mutual
   renameContext (Mut x c) s  = under Mut x rename c s 
   
   renameCoValue : Eq x => CoValue x a -> Subst x x -> CoValue x a
-  renameCoValue (CoVar a)     s = CoVar a
-  renameCoValue (Fce f)       s = Fce (renameForce f s)
+  renameCoValue (CoVar a)      s = CoVar a
+  renameCoValue (Fce f)        s = Fce (renameForce f s)
   renameCoValue (FLet x f tau) s = under2 FLet x renameForce f renameEnv tau s
   
   renameForce : Eq x => Force x a -> Subst x x -> Force x a
@@ -121,7 +130,7 @@ mutual
   
   substValue : (Eq x, Alternative m, MonadState (List x) m) => 
                Value x a -> Subst x (Value x a) -> m (Value x a)
-  substValue (Var x)   s = pure (replace Var x s)
+  substValue (Var x)   s = pure $ replace Var x s
   substValue (Lam x t) s = under' Lam x substTerm renameTerm t s
   
   substContext : (Eq x, Alternative m, MonadState (List x) m) => 
@@ -131,7 +140,7 @@ mutual
   
   substCoValue : (Eq x, Alternative m, MonadState (List x) m) => 
                  CoValue x a -> Subst x (Value x a) -> m (CoValue x a)
-  substCoValue (CoVar a)     s = pure (CoVar a)
+  substCoValue (CoVar a)     s = pure $ CoVar a
   substCoValue (Fce f)       s = Fce <$> substForce f s
   substCoValue (FLet x f tau) s =
     under2' FLet x substForce renameForce f substEnv renameEnv tau s
@@ -166,8 +175,8 @@ mutual
   corenameContext (Mut x c) s = Mut x (corename c s)
   
   corenameCoValue : Eq a => CoValue x a -> Subst a a -> CoValue x a
-  corenameCoValue (CoVar a)     s = replaceBy CoVar CoVar a s
-  corenameCoValue (Fce f)       s = Fce (corenameForce f s)
+  corenameCoValue (CoVar a)      s = replaceBy CoVar CoVar a s
+  corenameCoValue (Fce f)        s = Fce (corenameForce f s)
   corenameCoValue (FLet x f tau) s =
     FLet x (corenameForce f s) (corenameEnv tau s)
   
@@ -176,51 +185,62 @@ mutual
   corenameForce (App t e)  s = App (corenameTerm t s) (corenameCoValue e s)
   
   corenameEnv : Eq a => Environment x a -> Subst a a -> Environment x a
-  corenameEnv tau s = map (`corenameBind` s) tau
+  corenameEnv tau s = map (\x => corenameBind x s) tau
   
   corenameBind : Eq a => Binding x a -> Subst a a -> Binding x a
   corenameBind (Bind x a c) s = under (Bind x) a corename c s  
 
 mutual
-  cosubst : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Command a a -> Subst a (CoValue a a) -> Value a (Command a a)
+  cosubst : (Eq a, Alternative m, MonadState (List a) m) => 
+            Command a a -> Subst a (CoValue a a) -> m (Command a a)
   cosubst (C t e) s = C <$> cosubstTerm t s <*> cosubstContext e s
   
-  cosubstTerm : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Term a a -> Subst a (CoValue a a) -> Value a (Term a a)
+  cosubstTerm : (Eq a, Alternative m, MonadState (List a) m) => 
+                Term a a -> Subst a (CoValue a a) -> m (Term a a)
   cosubstTerm (Val v)  s = Val <$> cosubstValue v s
   cosubstTerm (Mu a c) s = under' Mu a cosubst corename c s
   
-  cosubstValue : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Value a a -> Subst a (CoValue a a) -> Value a (Value a a)
-  cosubstValue (Var x)   s = Var x
+  cosubstValue : (Eq a, Alternative m, MonadState (List a) m) => 
+                 Value a a -> Subst a (CoValue a a) -> m (Value a a)
+  cosubstValue (Var x)   s = pure $ Var x
   cosubstValue (Lam x t) s = Lam x <$> cosubstTerm t s
   
-  cosubstContext : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Context a a -> Subst a (CoValue a a) -> Value a (Context a a)
+  cosubstContext : (Eq a, Alternative m, MonadState (List a) m) => 
+                   Context a a -> Subst a (CoValue a a) -> m (Context a a)
   cosubstContext (CoVal e) s = CoVal <$> cosubstCoValue e s
   cosubstContext (Mut x c) s = Mut x <$> cosubst c s
   
-  cosubstCoValue : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => CoValue a a -> Subst a (CoValue a a) -> Value a (CoValue a a)
-  cosubstCoValue (CoVar a)     s = pure (replace CoVar a s)
+  cosubstCoValue : (Eq a, Alternative m, MonadState (List a) m) => 
+                   CoValue a a -> Subst a (CoValue a a) -> m (CoValue a a)
+  cosubstCoValue (CoVar a)     s = pure $ replace CoVar a s
   cosubstCoValue (Fce f)       s = Fce <$> cosubstForce f s
   cosubstCoValue (FLet x f tau) s =
     FLet x <$> cosubstForce f s <*> cosubstEnv tau s
   
-  cosubstForce : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Force a a -> Subst a (CoValue a a) -> Value a (Force a a)
-  cosubstForce (CoFree a) s = pure (CoFree a)
+  cosubstForce : (Eq a, Alternative m, MonadState (List a) m) => 
+                 Force a a -> Subst a (CoValue a a) -> m (Force a a)
+  cosubstForce (CoFree a) s = pure $ CoFree a
   cosubstForce (App t e)  s = App <$> cosubstTerm t s <*> cosubstCoValue e s
   
-  cosubstEnv : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Environment a a -> Subst a (CoValue a a) -> Value a (Environment a a)
+  cosubstEnv : (Eq a, Alternative m, MonadState (List a) m) => 
+               Environment a a -> Subst a (CoValue a a) -> m (Environment a a)
   cosubstEnv tau s = mapUntilM (\x => matchBind x s) (\x => cosubstBind x s) tau
   
-  cosubstBind : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Binding a a -> Subst a (CoValue a a) -> Value a (Binding a a)
-  cosubstBind (Bind x a c) s = Bind x a <$> cosubst c s
+  cosubstBind : (Eq a, Alternative m, MonadState (List a) m) => 
+                Binding a a -> Subst a (CoValue a a) -> m (Binding a a)
+  cosubstBind (Bind x a c) s = Bind x a <$> cosubst c s  
 
 infix 3 //
-(//) : (Eq x, Alternative m, MonadState (List x) m) => Command x a -> Subst x (Value x a) -> m (Command x a)
+(//) : (Eq x, Alternative m, MonadState (List x) m) => 
+       Command x a -> Subst x (Value x a) -> m (Command x a)
 (//) = subst
 
 infix 3 //*
-(//*) : (Eq a, Alternative (Value a), MonadState (List a) (Value a)) => Command a a -> Subst a (CoValue a a) -> Value a (Command a a)
+(//*) : (Eq a, Alternative m, MonadState (List a) m) => 
+        Command a a -> Subst a (CoValue a a) -> m (Command a a)
 (//*) = cosubst
 
 infix 4 ///
 (///) : Eq x => Term x a -> Subst x x -> Term x a
 (///) = renameTerm
+  
