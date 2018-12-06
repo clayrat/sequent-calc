@@ -21,11 +21,11 @@ modules = MuMuTilde
         , Levy.TypeCheck
         , Levy.Eval
 
-        , Krivine.Algebra.Terms
-        , Krivine.Algebra.Redex
-        , Krivine.Algebra.Iterated
-        , Krivine.Algebra.Refocus
-        , Krivine.Algebra.Machine
+        , KAMAlg.Terms
+        , KAMAlg.Redex
+        , KAMAlg.Iterated
+        , KAMAlg.Refocus
+        , KAMAlg.Machine
 
         , KSF.Prelim
         , KSF.ListHelp
@@ -45,5 +45,19 @@ modules = MuMuTilde
         , ES.LambdaUpsilon
 
         , ABS.L
+        , ABS.AI
+        , ABS.Name.L
+        , ABS.Name.AM
+        , ABS.Value.L
+        , ABS.Value.AM
+
+        , ClasByNeed.List
+        , ClasByNeed.Identifier
+        , ClasByNeed.Syntax
+        , ClasByNeed.Substitution
+        , ClasByNeed.Redex
+        , ClasByNeed.Defunctionalized
+        , ClasByNeed.Operational.Decompose
+        , ClasByNeed.Operational.Run
 
 opts = "-p contrib -p tparsec"
