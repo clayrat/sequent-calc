@@ -8,7 +8,7 @@ import ClasByNeed.Redex
 
 -- The decomposition of a program into the standard redex and its surrounding 
 -- meta-context, if available. This is a trivial extension of the
--- defunctionalized search function.
+-- `Defunctionalized` search function.
 
 data MetaContext x a = MEmpty
                      | MLet (MetaContext x a) a (Command x a) x
