@@ -59,5 +59,12 @@ modules = MuMuTilde
         , ClasByNeed.Defunctionalized
         , ClasByNeed.Operational.Decompose
         , ClasByNeed.Operational.Run
+        , ClasByNeed.Operational.Refocusing
+        , ClasByNeed.Operational.FuseIteration
+        , ClasByNeed.Operational.CompressTransitions
+        , ClasByNeed.Operational.EliminateDeadCode
+        , ClasByNeed.Operational.SequentializeContexts
+
+        , NDSC
 
 opts = "-p contrib -p tparsec"

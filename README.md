@@ -16,3 +16,4 @@ Experiments with sequent calculi and abstract machines
 | `ES/LambdaUpsilon.idr` | https://github.com/maciej-bendkowski/combinatorics-of-explicit-substitutions/ |
 | `ABS`                  | [Ariola, Bohannon, Sabry, "Sequent calculi and abstract machines"](https://www.cs.indiana.edu/~sabry/papers/sequent.pdf) |
 | `ClasByNeed`           | [Ariola, Downen, Herbelin, Nakata, Saurin, "Classical call-by-need sequent calculi: The unity of semantic artifacts"](http://ix.cs.uoregon.edu/~pdownen/classical-need-artifacts/) |
+| `NDSC`                 | https://wenkokke.github.io/2016/one-lambda-calculus-many-times/ |
