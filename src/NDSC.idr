@@ -12,17 +12,6 @@ consSubset : Subset xs ys -> Subset (x::xs) (x::ys)
 consSubset f  Here      = Here
 consSubset f (There el) = There (f el)
 
-contractSubset : Subset (a::a::g) (a::g)
-contractSubset  Here      = Here
-contractSubset (There el) = el
-
-permuteSubset : (g : List x) -> Subset (g ++ a::b::d) (g ++ b::a::d) 
-permuteSubset []       Here              = There Here
-permuteSubset []      (There Here)       = Here
-permuteSubset []      (There (There el)) = There $ There el
-permuteSubset (g::gs)  Here              = Here
-permuteSubset (g::gs) (There el)         = There $ permuteSubset gs el
-
 data Ty = Atom | Fn Ty Ty
 
 infix 5 ~>
@@ -41,12 +30,23 @@ data ND : Sequent -> Type where
   ImpE : ND (g |- a~>b) -> ND (g |- a) -> ND (g |- b) -- app
 
 struct : Subset g g1 -> ND (g |- a) -> ND (g1 |- a)
-struct f (AxN e)     = AxN $ f e
-struct f (ImpI i)   = ImpI (struct (consSubset f) i)
-struct f (ImpE a b) = ImpE (struct f a) (struct f b)
+struct s (AxN e)    = AxN $ s e
+struct s (ImpI i)   = ImpI (struct (consSubset s) i)
+struct s (ImpE l r) = ImpE (struct s l) (struct s r)
 
 weaken : ND (g |- b) -> ND (a::g |- b)
 weaken = struct There
+
+contractSubset : Subset (a::a::g) (a::g)
+contractSubset  Here      = Here
+contractSubset (There el) = el
+
+permuteSubset : (g : List x) -> Subset (g ++ a::b::d) (g ++ b::a::d) 
+permuteSubset []       Here              = There Here
+permuteSubset []      (There Here)       = Here
+permuteSubset []      (There (There el)) = There $ There el
+permuteSubset (g::gs)  Here              = Here
+permuteSubset (g::gs) (There el)         = There $ permuteSubset gs el
 
 contract : ND (a::a::g |- b) -> ND (a::g |- b) 
 contract = struct contractSubset
@@ -105,14 +105,6 @@ lookup (There el) (_::es) = lookup el es
 
 -- part 2 (the lost one)
 
-data NJ : Sequent -> Type where
-  AxNJ  : NJ ([a] |- a)                     
-  ImpIJ : NJ (a::g |- b) -> NJ (g |- a~>b)            
-  ImpEJ : NJ (g |- a~>b) -> NJ (d |- a) -> NJ (g++d |- b)
-  WNJ   : NJ (g |- b) -> NJ (a::g |- b) 
-  CNJ   : NJ (a::a::g |- b) -> NJ (a::g |- b) 
-  PNJ   : NJ (g ++ a::b::d |- c) -> NJ (g ++ b::a::d |- c) 
-
 weakenCtxSubset : (g : List x) -> Subset d (g++d)
 weakenCtxSubset []      el = el
 weakenCtxSubset (g::gs) el = There $ weakenCtxSubset gs el
@@ -130,20 +122,24 @@ forwardCtxSubset (g::gs) s  Here      = Here
 forwardCtxSubset (g::gs) s (There el) = There $ forwardCtxSubset gs s el
 
 permuteCtxSubset : (g, s, p : List x) -> Subset ((g ++ s) ++ (p ++ d)) ((g ++ p) ++ (s ++ d))
-permuteCtxSubset g s []      {d} el = rewrite appendNilRightNeutral g in 
-                                      rewrite appendAssociative g s d in 
-                                      el
-permuteCtxSubset g s (p::ps) {d} el = rewrite appendAssociative g [p] ps in 
-                                      permuteCtxSubset (g ++ [p]) s ps $ 
-                                      rewrite sym $ appendAssociative g [p] s in
-                                      forwardCtxSubset g s {d=ps++d} el
+permuteCtxSubset g s []      {d} el = 
+  rewrite appendNilRightNeutral g in 
+  rewrite appendAssociative g s d in 
+  el
+permuteCtxSubset g s (p::ps) {d} el = 
+  rewrite appendAssociative g [p] ps in 
+  permuteCtxSubset (g ++ [p]) s ps $ 
+  rewrite sym $ appendAssociative g [p] s in
+  forwardCtxSubset g s {d=ps++d} el
 
 contractCtxSubset : (g : List x) -> Subset ((g ++ g) ++ d) (g ++ d)
 contractCtxSubset []       el        = el
 contractCtxSubset (g::gs)  Here      = Here
-contractCtxSubset (g::gs) (There el) {d} with (forwardCtxSubset [] gs {a=g} {d=gs++d} $ rewrite appendAssociative gs (g::gs) d in el)
+contractCtxSubset (g::gs) (There el) {d} with (forwardCtxSubset [] gs {a=g} {d=gs++d} $ 
+                                               rewrite appendAssociative gs (g::gs) d in el)
    | Here      = Here
-   | There el2 = There $ contractCtxSubset gs {d} $ rewrite sym $ appendAssociative gs gs d in el2
+   | There el2 = There $ contractCtxSubset gs {d} $ 
+                 rewrite sym $ appendAssociative gs gs d in el2
 
 weakenCtx : (g : List Ty) -> ND (d |- a) -> ND (g++d |- a)
 weakenCtx g = struct $ weakenCtxSubset g
@@ -164,6 +160,14 @@ permuteCtx' g s {p} =
 
 weakenLCtx : (g : List Ty) -> ND (g |- a) -> ND (g++d |- a)
 weakenLCtx g {d} = permuteCtx' [] d {p=g} . weakenCtx d
+
+data NJ : Sequent -> Type where
+  AxNJ  : NJ ([a] |- a)                     
+  ImpIJ : NJ (a::g |- b) -> NJ (g |- a~>b)            
+  ImpEJ : NJ (g |- a~>b) -> NJ (d |- a) -> NJ (g++d |- b)
+  WNJ   : NJ (g |- b) -> NJ (a::g |- b) 
+  CNJ   : NJ (a::a::g |- b) -> NJ (a::g |- b) 
+  PNJ   : NJ (g ++ a::b::d |- c) -> NJ (g ++ b::a::d |- c) 
 
 weakenCtxJ : (g : List Ty) -> NJ (d |- a) -> NJ (g++d |- a)
 weakenCtxJ []      nj = nj
@@ -225,7 +229,7 @@ nilEN : NJ (g ++ [] |- a) -> NJ (g |- a)
 nilEN {g} nj = rewrite sym $ appendNilRightNeutral g in nj
 
 nj2nd : NJ s -> ND s
-nj2nd  AxNJ           = AxN Here
+nj2nd  AxNJ           = ax0N
 nj2nd (ImpIJ i)       = ImpI $ nj2nd i
 nj2nd (ImpEJ {g} l r) = ImpE (weakenLCtx g $ nj2nd l) (weakenCtx g $ nj2nd r)
 nj2nd (WNJ i)         = weaken $ nj2nd i
