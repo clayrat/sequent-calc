@@ -2,6 +2,7 @@ module ClasByNeed.Operational.Decompose
 
 import ClasByNeed.Syntax
 import ClasByNeed.Redex
+import ClasByNeed.Result
 
 %default total
 %access public export
@@ -9,9 +10,6 @@ import ClasByNeed.Redex
 -- The decomposition of a program into the standard redex and its surrounding 
 -- meta-context, if available. This is a trivial extension of the
 -- `Defunctionalized` search function.
-
-data MetaContext x a = MEmpty
-                     | MLet (MetaContext x a) a (Command x a) x
 
 data Decomposition x a = Answer x (Term x a) a (MetaContext x a)
                        | Rdx (Redex x a) (MetaContext x a)

@@ -2,15 +2,13 @@ module ClasByNeed.Defunctionalized
 
 import ClasByNeed.Syntax
 import ClasByNeed.Redex
+import ClasByNeed.Result
 
 %default total
 %access public export
 
 -- The CPS search function, in which the continuation and demanded context have
 -- been defunctionalized
-
-data MetaContext x a = MEmpty
-                     | MLet (MetaContext x a) a (Command x a) x
 
 data Found x a = Answer x (Term x a) a
                | Rdx (Redex x a)

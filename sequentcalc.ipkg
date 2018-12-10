@@ -56,6 +56,7 @@ modules = MuMuTilde
         , ClasByNeed.Syntax
         , ClasByNeed.Substitution
         , ClasByNeed.Redex
+        , ClasByNeed.Result
         , ClasByNeed.Defunctionalized
         , ClasByNeed.Operational.Decompose
         , ClasByNeed.Operational.Run
@@ -64,7 +65,12 @@ modules = MuMuTilde
         , ClasByNeed.Operational.CompressTransitions
         , ClasByNeed.Operational.EliminateDeadCode
         , ClasByNeed.Operational.SequentializeContexts
+        , ClasByNeed.Operational.FuseFillDemand
+        , ClasByNeed.Operational.AbstractEnvironment
+        , ClasByNeed.Machine.Run
+        , ClasByNeed.Machine.Compressed
 
         , NDSC
+        , LK
 
 opts = "-p contrib -p tparsec"
