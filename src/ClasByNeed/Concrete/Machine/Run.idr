@@ -1,22 +1,15 @@
-module ClasByNeed.Machine.Run
+module ClasByNeed.Concrete.Machine.Run
 
 import Control.Monad.State
 import ClasByNeed.Identifier
-import ClasByNeed.List
-import ClasByNeed.Syntax
-import ClasByNeed.Substitution
-import ClasByNeed.Result
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Substitution
+import ClasByNeed.Concrete.Result
 
 %access public export
 %default covering
 
 -- The abstract machine for \llvf
-
-splitAtVar : Eq a => a -> Environment a a -> Maybe (Environment a a, Binding a a, Environment a a)
-splitAtVar x tau = split (match x) tau
-  where 
-  match : a -> Binding a a -> Bool
-  match x (Bind y _ _) = x == y
 
 mutual 
   reduceCommand : (Eq a, Alternative m, MonadState (List a) m) =>

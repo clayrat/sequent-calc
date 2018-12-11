@@ -1,8 +1,8 @@
-module ClasByNeed.Operational.Decompose
+module ClasByNeed.Concrete.Operational.Decompose
 
-import ClasByNeed.Syntax
-import ClasByNeed.Redex
-import ClasByNeed.Result
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Redex
+import ClasByNeed.Concrete.Result
 
 %default total
 %access public export

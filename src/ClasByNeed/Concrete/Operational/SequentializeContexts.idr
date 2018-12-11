@@ -1,10 +1,10 @@
-module ClasByNeed.Operational.SequentializeContexts
+module ClasByNeed.Concrete.Operational.SequentializeContexts
 
 import Control.Monad.State
 import ClasByNeed.List
-import ClasByNeed.Syntax
-import ClasByNeed.Substitution
-import ClasByNeed.Result
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Substitution
+import ClasByNeed.Concrete.Result
 
 %access public export
 %default covering

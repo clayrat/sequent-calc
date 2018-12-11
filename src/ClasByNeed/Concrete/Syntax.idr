@@ -1,4 +1,6 @@
-module ClasByNeed.Syntax
+module ClasByNeed.Concrete.Syntax
+
+import ClasByNeed.List
 
 %default total
 %access public export
@@ -26,3 +28,9 @@ mutual
   Environment x a = List $ Binding x a
   
   data Binding x a = Bind x a (Command x a)
+
+splitAtVar : Eq a => a -> Environment a a -> Maybe (Environment a a, Binding a a, Environment a a)
+splitAtVar x tau = split (match x) tau
+  where 
+  match : a -> Binding a a -> Bool
+  match x (Bind y _ _) = x == y  

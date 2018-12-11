@@ -53,22 +53,31 @@ modules = MuMuTilde
 
         , ClasByNeed.List
         , ClasByNeed.Identifier
-        , ClasByNeed.Syntax
-        , ClasByNeed.Substitution
-        , ClasByNeed.Redex
-        , ClasByNeed.Result
-        , ClasByNeed.Defunctionalized
-        , ClasByNeed.Operational.Decompose
-        , ClasByNeed.Operational.Run
-        , ClasByNeed.Operational.Refocusing
-        , ClasByNeed.Operational.FuseIteration
-        , ClasByNeed.Operational.CompressTransitions
-        , ClasByNeed.Operational.EliminateDeadCode
-        , ClasByNeed.Operational.SequentializeContexts
-        , ClasByNeed.Operational.FuseFillDemand
-        , ClasByNeed.Operational.AbstractEnvironment
-        , ClasByNeed.Machine.Run
-        , ClasByNeed.Machine.Compressed
+
+        , ClasByNeed.Concrete.Syntax
+        , ClasByNeed.Concrete.Substitution
+        , ClasByNeed.Concrete.Redex
+        , ClasByNeed.Concrete.Result
+        , ClasByNeed.Concrete.Defunctionalized
+        , ClasByNeed.Concrete.Operational.Decompose
+        , ClasByNeed.Concrete.Operational.Run
+        , ClasByNeed.Concrete.Operational.Refocusing
+        , ClasByNeed.Concrete.Operational.FuseIteration
+        , ClasByNeed.Concrete.Operational.CompressTransitions
+        , ClasByNeed.Concrete.Operational.EliminateDeadCode
+        , ClasByNeed.Concrete.Operational.SequentializeContexts
+        , ClasByNeed.Concrete.Operational.FuseFillDemand
+        , ClasByNeed.Concrete.Operational.AbstractEnvironment
+        , ClasByNeed.Concrete.Machine.Run
+        , ClasByNeed.Concrete.Machine.Compressed
+
+        , ClasByNeed.Closure.Syntax
+        , ClasByNeed.Closure.Substitution
+        , ClasByNeed.Closure.Machine.ClosureConvert
+        , ClasByNeed.Closure.Machine.CompressTransitions
+        , ClasByNeed.Closure.Machine.RefunctionalizeSyntax
+        , ClasByNeed.Closure.Machine.RestoreHygiene
+        , ClasByNeed.Closure.Machine.LiftLambda
 
         , NDSC
         , LK

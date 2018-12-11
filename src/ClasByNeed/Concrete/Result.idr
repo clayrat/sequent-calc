@@ -1,7 +1,7 @@
-module ClasByNeed.Result
+module ClasByNeed.Concrete.Result
 
-import ClasByNeed.Syntax
-import ClasByNeed.Redex
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Redex
 
 %access public export
 %default total

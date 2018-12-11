@@ -1,8 +1,8 @@
-module ClasByNeed.Substitution
+module ClasByNeed.Concrete.Substitution
 
 import Control.Monad.State
 import ClasByNeed.Identifier
-import ClasByNeed.Syntax
+import ClasByNeed.Concrete.Syntax
 
 %default covering
 %access public export

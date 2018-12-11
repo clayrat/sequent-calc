@@ -1,11 +1,11 @@
-module ClasByNeed.Operational.Run
+module ClasByNeed.Concrete.Operational.Run
 
 import Control.Monad.Syntax
 import Control.Monad.State
-import ClasByNeed.Syntax
-import ClasByNeed.Redex
-import ClasByNeed.Result
-import ClasByNeed.Operational.Decompose
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Redex
+import ClasByNeed.Concrete.Result
+import ClasByNeed.Concrete.Operational.Decompose
 
 %access public export
 %default covering

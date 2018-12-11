@@ -1,16 +1,17 @@
-module ClasByNeed.Operational.AbstractEnvironment
+module ClasByNeed.Concrete.Operational.FuseFillDemand
 
 import Control.Monad.State
 import ClasByNeed.Identifier
 import ClasByNeed.List
-import ClasByNeed.Syntax
-import ClasByNeed.Substitution
-import ClasByNeed.Result
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Substitution
+import ClasByNeed.Concrete.Result
 
 %access public export
 %default covering
 
--- Abstract the environment manipulation out of the interpreter loop
+-- Fuse the recomposition of demanded meta-contexts into the mutually
+-- recursive interpreter
 
 mutual
   refocusCommand : (Eq a, Alternative m, MonadState (List a) m) =>
@@ -35,15 +36,17 @@ mutual
   refocusCoValue : (Eq a, Alternative m, MonadState (List a) m) =>
                    CoValue a a -> Value a a -> Environment a a -> m (ResultE a a)
   refocusCoValue (CoVar a)      v k = pure $ CoStuckE a v k
-  refocusCoValue (FLet x f tau) v k = 
-    do tau'  <- tau `substEnv` (x := v)
-       f'    <- f `substForce` (x := v)
-       refocus (C (Val v) (CoVal $ Fce f')) (tau' ++ k)
+  refocusCoValue (FLet x f tau) v k =
+    -- |refocus (fillDemand (tau // (x, v)) c') k|
+    -- |  where c' = C (Val v) (CoVal (Force (f // (x, v))))|
+    do tau' <- tau `substEnv` (x := v)
+       f' <- f `substForce` (x := v)
+       fillDemand tau' (C (Val v) (CoVal (Fce f))) k
   refocusCoValue (Fce f)        v k = refocusValue v f k
   
   refocusValue : (Eq a, Alternative m, MonadState (List a) m) =>
                  Value a a -> Force a a -> Environment a a -> m (ResultE a a)
-  refocusValue (Var x)   f k = continue k x f
+  refocusValue (Var x)   f k = continue k x f empty
   refocusValue (Lam x t) f k = refocusForce f x t k
   
   refocusForce : (Eq a, Alternative m, MonadState (List a) m) =>
@@ -57,15 +60,25 @@ mutual
   refocus : (Eq a, Alternative m, MonadState (List a) m) =>
             Command a a -> Environment a a -> m (ResultE a a)
   refocus c k = refocusCommand c k
-  
+
   continue : (Eq a, Alternative m, MonadState (List a) m) =>          
-             Environment a a -> a -> Force a a -> m (ResultE a a)  
-  continue k y f = case split (match y) k of
-    Nothing                        => pure $ StuckE y f k
-    Just (left, Bind x a c, right) => refocus (C (Mu a c) (CoVal (FLet x f left))) right
-  where 
-    match : a -> Binding a a -> Bool
-    match y (Bind x _ _) = x == y
+             Environment a a -> a -> Force a a -> Environment a a -> m (ResultE a a)  
+  continue []                 y f d = pure $ StuckE y f d
+  continue (Bind x a c :: k') y f d = 
+    if x == y 
+      then refocus (C (Mu a c) (CoVal (FLet x f d))) k'
+      else continue k' y f (d |> Bind x a c)
+
+  fillDemand : (Eq a, Alternative m, MonadState (List a) m) =>
+               Environment a a -> Command a a -> Environment a a -> m (ResultE a a)
+  fillDemand d c' k = case viewr d of
+    EmptyR                => refocus c' k
+    ConsR d' (Bind x a c) =>
+      -- |refocus (C (Mu a c) (Let x (fillDemand d' c'))) k|
+      -- |refocusContext (Let x (fillDemand d' c')) (Mu a c) k|
+      -- |refocusTermLet (Mu a c) x (fillDemand d' c') k|
+      -- |refocusCommand (fillDemand d' c') (Bind x a c : k)|
+      fillDemand d' c' (Bind x a c :: k)
 
 run : (Eq a, Alternative m, MonadState (List a) m) =>
       Command a a -> m (ResultE a a)

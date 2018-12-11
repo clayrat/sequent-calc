@@ -1,12 +1,12 @@
-module ClasByNeed.Operational.FuseIteration
+module ClasByNeed.Concrete.Operational.FuseIteration
 
 import Control.Monad.State
 import ClasByNeed.Identifier
-import ClasByNeed.Syntax
-import ClasByNeed.Redex
-import ClasByNeed.Substitution
-import ClasByNeed.Result
-import ClasByNeed.Operational.Decompose
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Redex
+import ClasByNeed.Concrete.Substitution
+import ClasByNeed.Concrete.Result
+import ClasByNeed.Concrete.Operational.Decompose
 
 %hide Redex.contract
 %access public export

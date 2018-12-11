@@ -1,10 +1,10 @@
-module ClasByNeed.Redex
+module ClasByNeed.Concrete.Redex
 
 import Control.Monad.State
 import ClasByNeed.Identifier
 import ClasByNeed.List
-import ClasByNeed.Syntax
-import ClasByNeed.Substitution
+import ClasByNeed.Concrete.Syntax
+import ClasByNeed.Concrete.Substitution
 
 %default total
 %access public export
