@@ -78,8 +78,17 @@ modules = MuMuTilde
         , ClasByNeed.Closure.Machine.RefunctionalizeSyntax
         , ClasByNeed.Closure.Machine.RestoreHygiene
         , ClasByNeed.Closure.Machine.LiftLambda
+        , ClasByNeed.Closure.Translation.Translate
 
         , NDSC
         , LK
+
+        , L.Spiwack.Core
+        , L.Spiwack.CoreTyped
+        , L.Spiwack.CoreLinear
+        , L.Spiwack.LinearMulAdd
+        , L.Spiwack.Linear
+        
+        , L.Scherer.MuMuT
 
 opts = "-p contrib -p tparsec"
