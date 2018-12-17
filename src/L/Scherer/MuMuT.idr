@@ -168,4 +168,3 @@ reduceIter : Cmd g d -> Maybe (Cmd g d)
 reduceIter c with (reduce c)
   | Nothing = Just c
   | Just c' = assert_total $ reduceIter c'
--}
