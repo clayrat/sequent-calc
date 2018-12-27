@@ -33,8 +33,7 @@ mutual
     Nothing                        => pure $ CoStuckDM a v tau
     Just (_, DBind _ _, _)         => pure $ CoStuckDM a v tau -- is this correct?
     Just (tau', DCoBind _ e, tau)  => e v (tau' ++ [DCoBind a e] ++ tau)
-  transCoValue (FLet x f tau') v tau = v (transForce f) tau''
-      where tau'' = (transEnv tau') ++ [DBind x (\e => e v)] ++ tau
+  transCoValue (FLet x f tau') v tau = v (transForce f) ((transEnv tau') ++ [DBind x (\e => e v)] ++ tau)
   transCoValue (Fce f)         v tau = v (transForce f) tau
   
   transValue : (Eq x, Eq a, Alternative m, MonadState (List x) m) =>

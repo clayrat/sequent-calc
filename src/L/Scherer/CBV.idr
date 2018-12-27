@@ -1,13 +1,15 @@
 module L.Scherer.CBV
 
 import Data.List
-import L.Scherer.Subset
+import Subset
+
+import L.Scherer.Ty
 
 %access public export
 %default total
 %hide Language.Reflection.Var
 
-data Ty = A | Imp Ty Ty | Ten Ty Ty
+--data Ty = A | Imp Ty Ty | Ten Ty Ty
 
 mutual 
   data Cmd : List Ty -> List Ty -> Type where 
@@ -20,13 +22,14 @@ mutual
   data Value : List Ty -> Ty -> List Ty -> Type where    
     Var  : Elem a g -> Value g a d
     MatC : Cmd (a::g) (b::d) -> Value g (Imp a b) d
-    Pair : Value g a d -> Value g b d -> Value g (Ten a b) d
+--    Pair : Value g a d -> Value g b d -> Value g (Ten a b) d
 
   data CoTerm : List Ty -> Ty -> List Ty -> Type where
     CoVar : Elem a d -> CoTerm g a d
+    Empty : CoTerm g a d
     Mut   : Cmd (a::g) d -> CoTerm g a d
     AppC  : Value g a d -> CoTerm g b d -> CoTerm g (Imp a b) d
-    MatP  : Cmd (a::b::g) d -> CoTerm g (Ten a b) d
+--    MatP  : Cmd (a::b::g) d -> CoTerm g (Ten a b) d
 
 mutual    
   shiftCmd : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> Cmd g d -> Cmd g1 d1    
@@ -39,13 +42,14 @@ mutual
   shiftValue : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> Value g a d -> Value g1 a d1    
   shiftValue {is1}       (Var el)     = Var $ shift is1 el
   shiftValue {is1} {is2} (MatC c)     = MatC $ shiftCmd {is1=Cons2 is1} {is2=Cons2 is2} c
-  shiftValue             (Pair t u)   = Pair (shiftValue t) (shiftValue u)
+--  shiftValue             (Pair t u)   = Pair (shiftValue t) (shiftValue u)
 
   shiftCoTerm : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> CoTerm g a d -> CoTerm g1 a d1    
   shiftCoTerm       {is2} (CoVar el)   = CoVar $ shift is2 el
+  shiftCoTerm              Empty       = Empty
   shiftCoTerm {is1}       (Mut c)      = Mut $ shiftCmd {is1=Cons2 is1} c
   shiftCoTerm             (AppC t e)   = AppC (shiftValue t) (shiftCoTerm e)
-  shiftCoTerm             (MatP c)     = MatP $ shiftCmd c
+--  shiftCoTerm             (MatP c)     = MatP $ shiftCmd c
 
 mutual
   subst : Cmd (a::g) d -> Value g a d -> Cmd g d
@@ -59,13 +63,14 @@ mutual
   substValue (Var  Here)      va = va
   substValue (Var (There el)) _  = Var el
   substValue (MatC cmd)       va = MatC $ subst (shiftCmd cmd) (shiftValue va)
-  substValue (Pair t u)       va = Pair (substValue t va) (substValue u va)
+--  substValue (Pair t u)       va = Pair (substValue t va) (substValue u va)
 
   substCoTerm : CoTerm (a::g) c d -> Value g a d -> CoTerm g c d
   substCoTerm (CoVar el) va = CoVar el
+  substCoTerm  Empty     va = Empty
   substCoTerm (Mut cmd)  va = Mut $ subst (shiftCmd cmd) (shiftValue va) 
   substCoTerm (AppC t e) va = AppC (substValue t va) (substCoTerm e va)
-  substCoTerm (MatP cmd) va = MatP $ subst (shiftCmd cmd) (shiftValue va) 
+--  substCoTerm (MatP cmd) va = MatP $ subst (shiftCmd cmd) (shiftValue va) 
 
 mutual
   cosubst : Cmd g (a::d) -> CoTerm g a d -> Cmd g d
@@ -78,23 +83,27 @@ mutual
   cosubstValue : Value g c (a::d) -> CoTerm g a d -> Value g c d
   cosubstValue (Var el)     _  = Var el
   cosubstValue (MatC cmd)   ct = MatC $ cosubst (shiftCmd cmd) (shiftCoTerm ct)
-  cosubstValue (Pair t u)   ct = Pair (cosubstValue t ct) (cosubstValue u ct)
+--  cosubstValue (Pair t u)   ct = Pair (cosubstValue t ct) (cosubstValue u ct)
 
   cosubstCoTerm : CoTerm g c (a::d) -> CoTerm g a d -> CoTerm g c d
   cosubstCoTerm (CoVar Here)       ct = ct
   cosubstCoTerm (CoVar (There el)) _  = CoVar el
+  cosubstCoTerm  Empty _              = Empty
   cosubstCoTerm (Mut cmd)          ct = Mut $ cosubst cmd (shiftCoTerm ct)
   cosubstCoTerm (AppC t e)         ct = AppC (cosubstValue t ct) (cosubstCoTerm e ct)
-  cosubstCoTerm (MatP cmd)         ct = MatP $ cosubst cmd (shiftCoTerm ct)
+--  cosubstCoTerm (MatP cmd)         ct = MatP $ cosubst cmd (shiftCoTerm ct)
 
 reduce : Cmd g d -> Maybe (Cmd g d)
 reduce (C (Mu c)            e          ) = Just $ cosubst c e
-reduce (C (Val v)          (Mut c)     ) = Just $ subst c v
+reduce (C (Val  v)         (Mut c)     ) = Just $ subst c v
 reduce (C (Val (MatC c))   (AppC t e)  ) = Just $ cosubst (subst c (shiftValue t)) (shiftCoTerm e)
-reduce (C (Val (Pair t u)) (MatP c)    ) = Just $ subst (subst c (shiftValue t)) u
+--reduce (C (Val (Pair t u)) (MatP c)    ) = Just $ subst (subst c (shiftValue t)) u
 reduce  _                              = Nothing
 
-reduceIter : Cmd g d -> Maybe (Cmd g d)
-reduceIter c with (reduce c)
-  | Nothing = Just c
-  | Just c' = assert_total $ reduceIter c'
+reduceIter : Cmd g d -> (Nat, Maybe (Cmd g d))
+reduceIter c = loop Z c 
+  where
+    loop : Nat -> Cmd g d -> (Nat, Maybe (Cmd g d))  
+    loop n c1 with (reduce c1)
+      | Nothing = (n, Just c1)
+      | Just c2 = assert_total $ loop (S n) c2

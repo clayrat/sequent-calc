@@ -1,4 +1,4 @@
-module L.Scherer.Subset
+module Subset
 
 import Data.List
 

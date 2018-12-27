@@ -1,7 +1,7 @@
 module L.Scherer.MuMuT
 
 import Data.List
-import L.Scherer.Subset
+import Subset
 
 %access public export
 %default total
@@ -79,8 +79,19 @@ callcc : Term g (Imp (Imp a b) a) (a::d) -> Term g a d
 callcc f = 
   Mu $ C f
          (AppC 
-           (MatC $ C (Var Here) (CoVar $ There Here))
+           (MatC $ C (Var Here) 
+                     (CoVar $ There Here))
            (CoVar Here))
+
+pierce : Term g (Imp (Imp (Imp a b) a) a) d
+pierce = 
+  MatC $ C 
+    (Mu $ C (Var Here)
+            (AppC 
+              (MatC $ C (Var Here) 
+                        (CoVar $ There Here))
+              (CoVar Here)))
+    (CoVar Here)
 
 -- 
 llv0 : Term [] (Imp A (Imp A A)) []      
@@ -141,6 +152,7 @@ mutual
 
 {-  
 reduce : Cmd g d -> Maybe (Cmd g d)
+-- critical pair!  
 reduce (C (Mu c)       e          ) = Just $ cosubst c e
 reduce (C  t          (Mut c)     ) = Just $ subst c t
 reduce (C (MatC c)    (AppC t e)  ) = Just $ subst (cosubst c (shiftCoTerm e)) (shiftTerm t)
@@ -150,9 +162,4 @@ reduce (C (Inr t2)    (MatS _ c2) ) = Just $ subst c2 t2
 reduce (C (MatR c1 _) (Prjl e1)   ) = Just $ cosubst c1 e1
 reduce (C (MatR _ c2) (Prjr e2)   ) = Just $ cosubst c2 e2
 reduce  _                           = Nothing
-
-reduceIter : Cmd g d -> Maybe (Cmd g d)
-reduceIter c with (reduce c)
-  | Nothing = Just c
-  | Just c' = assert_total $ reduceIter c'
 -}

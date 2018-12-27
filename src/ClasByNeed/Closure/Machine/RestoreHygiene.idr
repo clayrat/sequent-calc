@@ -5,7 +5,6 @@ import ClasByNeed.Identifier
 import ClasByNeed.List
 import ClasByNeed.Closure.Syntax
 import ClasByNeed.Closure.Substitution
-import ClasByNeed.Closure.Result
 
 %default covering
 %access public export

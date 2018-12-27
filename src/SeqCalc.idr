@@ -76,6 +76,12 @@ impV p q = TpD (TpNot p `TpPar` TpU q)
 impN : Tp Neg -> Tp Neg -> Tp Neg
 impN m n = TpU (TpNot (m `TpPar` n))
 
+plu : Side -> Side -> Nat -> Nat
+plu LH LH i = S i
+plu RH LH i =   i
+plu LH RH i =   i
+plu RH RH i = S i
+
 mutual
   data Tel : Side -> Nat -> Nat -> Type where
     ZT : Tel s m m
@@ -88,12 +94,6 @@ mutual
   rhs : Side -> Pol -> Nat -> Nat -> Type
   rhs LH pol m n = Tel LH m n
   rhs RH pol m n = Tp pol
-
-  plu : Side -> Side -> Nat -> Nat
-  plu LH LH i = S i
-  plu RH LH i =   i
-  plu LH RH i =   i
-  plu RH RH i = S i
 
 {-  
 -- TODO can't define this, coverage checker seems to have a bug

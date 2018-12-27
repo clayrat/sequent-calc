@@ -3,6 +3,8 @@ module L.CoreTyped
 %access public export
 %default total
 
+data Ty = AL | AR 
+
 dual : Ty -> Ty
 dual AL = AR
 dual AR = AL

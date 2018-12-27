@@ -14,11 +14,11 @@ import KAMAlg.Refocus
 -- enforce the absence of Clapp constructors on closed terms, environments, and evaluation contexts respectively
 mutual
   ValidClosure : Closed s -> Type
-  ValidClosure (Clos _ e) = ValidEnv e
+  ValidClosure (Clos _ e)  = ValidEnv e
   ValidClosure (Clapp _ _) = Void
 
   ValidEnv : Env g -> Type
-  ValidEnv NE = ()
+  ValidEnv  NE      = ()
   ValidEnv (CE e c) = (ValidEnv e, ValidClosure c)
 
 ValidEvalCon : EvalCon s t -> Type  
@@ -32,11 +32,11 @@ getCon ((Clos {g} _ _) ** _)  = g
 getCon ((Clapp _ _)    ** vc) = absurd vc
 
 getEnv : (exc : (c : Closed s ** ValidClosure c)) -> Env (getCon exc)
-getEnv ((Clos _ e)  ** _) = e
+getEnv ((Clos _ e)  ** _)  = e
 getEnv ((Clapp _ _) ** vc) = absurd vc
 
 getTm : (exc : (c : Closed s ** ValidClosure c)) -> Tm (getCon exc) s
-getTm ((Clos t _)  ** _) = t
+getTm ((Clos t _)  ** _)  = t
 getTm ((Clapp _ _) ** vc) = absurd vc
 
 -- looking up a variable in a valid environment will always return a closure
@@ -69,15 +69,15 @@ refocusM e (BetaM _ t1 e1 _ tr) = refocusM (CE e (Clos t1 e1)) tr
 
 lookupClosure : (e : Env g) -> (x : Ref g s) -> (ve : ValidEnv e) 
              -> let exc = getClosure x e ve in lookup e x = Clos (getTm exc) (getEnv exc)
-lookupClosure NE Top _ impossible
-lookupClosure NE (Pop _) _ impossible
+lookupClosure  NE                 Top     _        impossible
+lookupClosure  NE                (Pop _)  _        impossible
 lookupClosure (CE e (Clos t e1))  Top    (ve, ve1) = Refl
 lookupClosure (CE _ (Clapp _ _))  Top    (_, v)    = absurd v
 lookupClosure (CE e  _         ) (Pop x) (ve, _)   = lookupClosure e x ve
 
 lookupLemma : (e : Env g) -> (x : Ref g s) -> (ve : ValidEnv e) -> ValidEnv (getEnv (getClosure x e ve))
-lookupLemma NE Top _ impossible
-lookupLemma NE (Pop _) _ impossible
+lookupLemma  NE                 Top     _       impossible
+lookupLemma  NE                (Pop _)  _       impossible
 lookupLemma (CE _ (Clos _ e1))  Top    (_, ve1) = ve1
 lookupLemma (CE _ (Clapp _ _))  Top    (_, v)   = absurd v
 lookupLemma (CE e  _         ) (Pop x) (ve, _)  = lookupLemma e x ve

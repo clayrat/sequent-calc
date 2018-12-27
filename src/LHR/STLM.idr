@@ -12,10 +12,10 @@ infix 5 ~>
 (~>) = Imp
 
 data Term : List Ty -> Ty -> List Ty -> Type where
-  Var : Elem a g -> Term g a d
-  Lam : Term (a::g) b d -> Term g (a~>b) d
-  App : Term g (a~>b) d -> Term g a d -> Term g b d
-  Mu  : Term g Bot (a::d) -> Term g a d
+  Var   : Elem a g -> Term g a d
+  Lam   : Term (a::g) b d -> Term g (a~>b) d
+  App   : Term g (a~>b) d -> Term g a d -> Term g b d
+  Mu    : Term g Bot (a::d) -> Term g a d
   Named : Elem a d -> Term g a d -> Term g Bot d
 
 pierce : Term g (((a~>b)~>a)~>a) d
