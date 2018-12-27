@@ -82,6 +82,7 @@ modules = MuMuTilde
 
         , NDSC
         , LK
+        , Subset
 
         , L.Spiwack.Core
         , L.Spiwack.CoreTyped
@@ -89,9 +90,13 @@ modules = MuMuTilde
         , L.Spiwack.LinearMulAdd
         , L.Spiwack.Linear
         
-        , L.Scherer.Subset
         , L.Scherer.MuMuT
         , L.Scherer.CBV
         , L.Scherer.CBN
+
+        , LHR.MuKAM
+        , LHR.STLM
+
+        , LJF.LJT
 
 opts = "-p contrib -p tparsec"

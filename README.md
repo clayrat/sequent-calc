@@ -19,3 +19,4 @@ Experiments with sequent calculi and abstract machines
 | `NDSC`                 | https://wenkokke.github.io/2016/one-lambda-calculus-many-times/ |
 | `L.Spiwack`            | http://assert-false.net/arnaud/papers/A%20dissection%20of%20L.pdf |
 | `L.Scherer`            | http://gallium.inria.fr/~scherer/research/L/tutorial-talk.pdf |
+| `LJF`                  | [Brock-Nannestad, Guenot, Gustafsson, "Computation in Focused Intuitionistic Logic"](http://www.itu.dk/people/ngue/pub/ppdp15.pdf) |
