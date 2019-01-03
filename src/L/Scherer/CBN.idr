@@ -19,7 +19,7 @@ mutual
   data Term : List Ty -> Ty -> List Ty -> Type where
     Var  : Elem a g -> Term g a d
     Mu   : Cmd g (a::d) -> Term g a d
-    MatC : Cmd (a::g) (b::d) -> Term g (Imp a b) d
+    MatC : Cmd (a::g) (b::d) -> Term g (a~>b) d
   --Pair : Term g a d -> Term g b d -> Term g (Ten a b) d
 
   data CoTerm : List Ty -> Ty -> List Ty -> Type where
@@ -29,7 +29,7 @@ mutual
   data CoValue : List Ty -> Ty -> List Ty -> Type where    
     Empty : CoValue g a d
     CoVar : Elem a d -> CoValue g a d
-    AppC  : Term g a d -> CoValue g b d -> CoValue g (Imp a b) d
+    AppC  : Term g a d -> CoValue g b d -> CoValue g (a~>b) d
 --    MatP  : Cmd (a::b::g) d -> CoValue g (Ten a b) d
 
 mutual    

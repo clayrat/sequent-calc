@@ -2,14 +2,11 @@ module LJF.LJT
 
 import Data.List
 import Subset
+import Lambda.Ty
+import Lambda.Lam
 
 %default total
 %access public export
-
-data Ty = A | Imp Ty Ty
-infix 5 ~>
-(~>) : Ty -> Ty -> Ty
-(~>) = Imp
 
 mutual
   data Async : List Ty -> Ty -> Type where
@@ -57,11 +54,6 @@ reduceLS  _                      = Nothing
 
 -- STLC embedding
 
-data Tm : List Ty -> Ty -> Type where
-  Vr : Elem a g -> Tm g a 
-  Lm : Tm (a::g) b -> Tm g (Imp a b)
-  Ap : Tm g (Imp a b) -> Tm g a -> Tm g b
-
 encode : Tm g a -> Async g a   
 encode (Vr e)    = Foc e Ax
 encode (Lm t)    = IR $ encode t
@@ -106,11 +98,3 @@ step _ = Nothing
 
 -- 
 
-TestTy : Ty
-TestTy = Imp A A
-
-TestTm1 : Tm [] TestTy
-TestTm1 = Ap (Ap (Lm $ Vr Here) (Lm $ Vr Here)) (Lm $ Vr Here)
-
-TestTm2 : Tm [] TestTy
-TestTm2 = Ap (Lm $ Vr Here) (Ap (Lm $ Vr Here) (Lm $ Vr Here))

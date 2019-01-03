@@ -22,14 +22,14 @@ mutual
 
   data Value : List Ty -> Ty -> List Ty -> Type where    
     Var  : Elem a g -> Value g a d
-    MatC : Cmd (a::g) (b::d) -> Value g (Imp a b) d
+    MatC : Cmd (a::g) (b::d) -> Value g (a~>b) d
 --    Pair : Value g a d -> Value g b d -> Value g (Ten a b) d
 
   data CoTerm : List Ty -> Ty -> List Ty -> Type where
     CoVar : Elem a d -> CoTerm g a d
     Empty : CoTerm g a d
     Mut   : Cmd (a::g) d -> CoTerm g a d
-    AppC  : Value g a d -> CoTerm g b d -> CoTerm g (Imp a b) d
+    AppC  : Value g a d -> CoTerm g b d -> CoTerm g (a~>b) d
 --    MatP  : Cmd (a::b::g) d -> CoTerm g (Ten a b) d
 
 mutual    

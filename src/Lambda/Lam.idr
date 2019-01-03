@@ -23,11 +23,11 @@ Term2 = Ap0 (Lm0 $ Vr0 Z) (Ap0 (Lm0 $ Vr0 Z) (Lm0 $ Vr0 Z))
 
 data Tm : List Ty -> Ty -> Type where
   Vr : Elem a g -> Tm g a 
-  Lm : Tm (a::g) b -> Tm g (Imp a b)
-  Ap : Tm g (Imp a b) -> Tm g a -> Tm g b
+  Lm : Tm (a::g) b -> Tm g (a~>b)
+  Ap : Tm g (a~>b) -> Tm g a -> Tm g b
   
 TestTy : Ty
-TestTy = Imp A A
+TestTy = A~>A
 
 TestTm1 : Tm [] TestTy
 TestTm1 = Ap (Ap (Lm $ Vr Here) (Lm $ Vr Here)) (Lm $ Vr Here)

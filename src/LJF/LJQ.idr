@@ -2,14 +2,10 @@ module LJF.LJQ
 
 import Data.List
 import Subset
+import Lambda.Ty
 
 %default total
 %access public export
-
-data Ty = A | Imp Ty Ty
-infix 5 ~>
-(~>) : Ty -> Ty -> Ty
-(~>) = Imp
 
 mutual
   data Async : List Ty -> Ty -> Type where
