@@ -1,4 +1,4 @@
-module L.Scherer.Ty
+module Lambda.Ty
 
 %access public export
 %default total

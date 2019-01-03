@@ -3,7 +3,8 @@ module L.Scherer.CBV
 import Data.List
 import Subset
 
-import L.Scherer.Ty
+import Lambda.Ty
+import Lambda.Lam
 
 %access public export
 %default total
@@ -107,3 +108,27 @@ reduceIter c = loop Z c
     loop n c1 with (reduce c1)
       | Nothing = (n, Just c1)
       | Just c2 = assert_total $ loop (S n) c2
+
+-- STLC embedding
+
+embedTm : Tm g a -> Term g a []
+embedTm (Vr el)  = Val $ Var el
+embedTm (Lm t)   = Val $ MatC $ C (shiftTerm $ embedTm t) (CoVar Here)
+embedTm (Ap t u) = 
+  Mu $ C (shiftTerm $ embedTm t) $ case embedTm u of
+   Val v => AppC (shiftValue v) (CoVar Here)
+   Mu c => Mut $ C (shiftTerm $ Mu c) (Mut $ C (Val $ Var $ There Here) (AppC (Var Here) (CoVar Here)))
+
+extractTerm : Cmd g d -> (a ** Term g a d)
+extractTerm (C {a} t _) = (a ** t)
+
+runLCBV : Tm g a -> (Nat, Maybe (b ** Term g b []))
+runLCBV t = 
+  let (n,r) = reduceIter (C (embedTm t) Empty) in
+  (n, extractTerm <$> r)
+
+test2 : runLCBV TestTm1 = (4, Just (TestTy ** embedTm ResultTm))
+test2 = Refl
+
+test3 : runLCBV TestTm2 = (6, Just (TestTy ** embedTm ResultTm))
+test3 = Refl
