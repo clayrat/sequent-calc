@@ -84,6 +84,11 @@ modules = MuMuTilde
         , LK
         , Subset
 
+        , Lambda.Ty
+        , Lambda.Lam
+        , Lambda.KAM
+        , Lambda.CEK
+
         , L.Spiwack.Core
         , L.Spiwack.CoreTyped
         , L.Spiwack.CoreLinear
@@ -98,5 +103,7 @@ modules = MuMuTilde
         , LHR.STLM
 
         , LJF.LJT
+        , LJF.LJQ
+        , LJF.LJF
 
 opts = "-p contrib -p tparsec"

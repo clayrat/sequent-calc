@@ -20,8 +20,8 @@ mutual
 
   data RSync : List Ty -> Ty -> Type where
     Ax  : Elem a g -> RSync g a 
-    IR  : Async (a::g) b -> RSync g (a~>b)
-    FHC : RSync g a -> RSync (a::g) b -> RSync g b -- focused head cut
+    IR  : Async (a::g) b -> RSync g (a~>b)          -- lambda
+    FHC : RSync g a -> RSync (a::g) b -> RSync g b  -- focused head cut
     -- no focused mid cut    
 
 mutual 
