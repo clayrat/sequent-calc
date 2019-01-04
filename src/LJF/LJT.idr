@@ -10,14 +10,14 @@ import Lambda.Lam
 
 mutual
   data Async : List Ty -> Ty -> Type where
-    Foc : Elem a g -> LSync g a b -> Async g b
+    Foc : Elem a g -> LSync g a b -> Async g b      -- ~contraction
     IR  : Async (a::g) b -> Async g (a~>b)          -- lambda  
-    HC  : Async g a -> LSync g a b -> Async g b     -- head cut
+    HC  : Async g a -> LSync g a b -> Async g b     -- head cut, beta-redex
     MC  : Async g a -> Async (a::g) b -> Async g b  -- mid cut, term explicit substitution
   
   data LSync : List Ty -> Ty -> Ty -> Type where
-    Ax  : LSync g a a 
-    IL  : Async g a -> LSync g b c -> LSync g (a~>b) c
+    Ax  : LSync g a a                                   -- empty list
+    IL  : Async g a -> LSync g b c -> LSync g (a~>b) c  -- prepending argument
     FHC : LSync g b a -> LSync g a c -> LSync g b c     -- focused head cut, concatenating contexts
     FMC : Async g a -> LSync (a::g) b c -> LSync g b c  -- focused mid cut, list explicit substitution
 
@@ -35,14 +35,14 @@ mutual
   shiftLSync      (FHC c c2) = FHC (assert_total $ shiftLSync c) (assert_total $ shiftLSync c2)
   shiftLSync {is} (FMC t c)  = FMC (assert_total $ shiftAsync t) (assert_total $ shiftLSync {is=Cons2 is} c)
 
--- reductions (useless because redexes are buried)
+-- reductions (TODO useless because redexes are buried)
 
 reduceA : Async g a -> Maybe (Async g a)
 reduceA (HC (IR t)     (IL u k)          ) = Just $ HC (MC u t) k
 --reduceA (HC (IR t)      Ax               ) = Just $ IR t
 reduceA (HC (Foc el k)  m                ) = Just $ Foc el (FHC k m)
 --reduceA (HC (HC t k)    m                ) = Just $ HC t (FHC k m)
-reduceA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync {is=ConsR Id} u) (shiftAsync t) 
+reduceA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync u) (shiftAsync t) 
 reduceA (MC  u         (Foc  Here      k)) = Just $ HC u (FMC u k)
 reduceA (MC  u         (Foc (There el) k)) = Just $ Foc el (FMC u k)
 reduceA  _                                 = Nothing
@@ -78,9 +78,9 @@ lookup (There el) (_::e) = lookup el e
 
 data Stack : Ty -> Ty -> Type where
   NS : Stack a a
-  CS : Clos a -> Stack b c -> Stack (Imp a b) c
+  CS : Clos a -> Stack b c -> Stack (a~>b) c
 
-snoc : Stack a (Imp b c) -> Clos b -> Stack a c
+snoc : Stack a (b~>c) -> Clos b -> Stack a c
 snoc  NS        c = CS c NS
 snoc (CS c1 st) c = CS c1 (snoc st c)
 
@@ -91,6 +91,9 @@ append (CS c s1) s2 = CS c (append s1 s2)
 data State : Ty -> Type where
   S1 : Async g a -> Env g -> Stack a b -> State b
   S2 : Async g a -> Env g -> Stack a x -> LSync d x y -> Env d -> Stack y b -> State b
+
+initState : Async [] a -> State a
+initState a = S1 a [] NS
 
 step : State b -> Maybe (State b)
 step (S1 (IR t    ) en (CS ug c)) = Just $ S1 t (ug::en) c
