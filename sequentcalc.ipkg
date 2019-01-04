@@ -2,7 +2,13 @@ package sequentcalc
 
 sourcedir = src
 
-modules = MuMuTilde
+modules = Lambda.Ty
+        , Lambda.Lam
+        , Lambda.Smallstep
+        , Lambda.KAM
+        , Lambda.CEK
+
+        , MuMuTilde
         , MuMuTilde.Rea1
         , MuMuTilde.Rea2
         , MuMuTilde.Rea3
@@ -42,7 +48,10 @@ modules = MuMuTilde
         , ES.Defun
         , ES.LF
         , ES.Multi
-        , ES.LambdaUpsilon
+        , ES.LambdaUpsilon.Untyped
+        , ES.LambdaUpsilon.BTree
+        , ES.LambdaUpsilon.Typed
+        , ES.LambdaUpsilon.Umach
 
         , ABS.L
         , ABS.AI
@@ -83,11 +92,6 @@ modules = MuMuTilde
         , NDSC
         , LK
         , Subset
-
-        , Lambda.Ty
-        , Lambda.Lam
-        , Lambda.KAM
-        , Lambda.CEK
 
         , L.Spiwack.Core
         , L.Spiwack.CoreTyped

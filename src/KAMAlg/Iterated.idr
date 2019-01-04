@@ -38,7 +38,7 @@ traceDecompose {c} t with (decompose c)
 
 lemma1 : (c : Closed s) -> Reducible (headReduce c) -> Reducible c
 lemma1 {s=O}       _                        h      = traceDecompose h
-lemma1 {s=Arr _ _}   (Clos (Lam body) env) (tr, h) = (Done {body} {e=env}, h)
+lemma1 {s=Arr _ _}   (Clos (Lam body) env) ( _, h) = (Done {body} {e=env}, h)
 lemma1 {s=Arr _ _} c@(Clos (App _ _) _)    (tr, h) = (traceDecompose tr, \x, rx => lemma1 (Clapp c x) (h x rx))
 lemma1 {s=Arr _ _} c@(Clos (Var _) _)      (tr, h) = (traceDecompose tr, \x, rx => lemma1 (Clapp c x) (h x rx))
 lemma1 {s=Arr _ _} c@(Clapp f x)           (tr, h) = 

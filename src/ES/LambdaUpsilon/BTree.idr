@@ -1,27 +1,14 @@
-module ES.LambdaUpsilon
+module ES.LambdaUpsilon.BTree
 
-%hide Language.Reflection.App
-%hide Interfaces.Abs
+import ES.LambdaUpsilon.Untyped
+
 %access public export
 %default total
 
-mutual 
-  data Term : Type where
-    Abs   : Term -> Term
-    Index : Nat -> Term
-    App   : Term -> Term -> Term
-    Clos  : Term -> Subs -> Term
-
-  -- explicit substitutions 
-  data Subs : Type where
-    Lift  : Subs -> Subs
-    Slash : Term -> Subs
-    Shift : Subs
-
-Uninhabited (Index _ = Abs _) where
+Uninhabited (Var _ = Abs _) where
   uninhabited Refl impossible
 
-Uninhabited (Abs _ = Index _) where
+Uninhabited (Abs _ = Var _) where
   uninhabited Refl impossible
 
 Uninhabited (Abs _ = App _ _) where
@@ -33,16 +20,16 @@ Uninhabited (App _ _ = Abs _) where
 Uninhabited (Clos _ _ = Abs _) where
   uninhabited Refl impossible
 
-Uninhabited (Index _ = App _ _) where
+Uninhabited (Var _ = App _ _) where
   uninhabited Refl impossible
 
-Uninhabited (App _ _ = Index _) where
+Uninhabited (App _ _ = Var _) where
   uninhabited Refl impossible
 
-Uninhabited (Clos _ _ = Index _) where
+Uninhabited (Clos _ _ = Var _) where
   uninhabited Refl impossible
 
-Uninhabited (Index _ = Clos _ _) where
+Uninhabited (Var _ = Clos _ _) where
   uninhabited Refl impossible
 
 Uninhabited (Clos _ _ = App _ _) where
@@ -71,7 +58,7 @@ slashInj Refl = Refl
 
 mutual 
   termSize : Term -> Nat
-  termSize (Index ix)  = S ix
+  termSize (Var ix)    = S ix
   termSize (Abs t)     = S (termSize t)
   termSize (App lt rt) = S (termSize lt + termSize rt)
   termSize (Clos t s)  = S (termSize t + subsSize s)    
@@ -123,13 +110,13 @@ btreeSize (BNode lt rt) = S (btreeSize lt + btreeSize rt)
 -- translation from btrees to terms
 mutual
   btree2Term : BTree -> Term
-  btree2Term  Leaf         = Index Z
+  btree2Term  Leaf         = Var Z
   btree2Term (LTree t)     = btree2TermN 1 t
   btree2Term (RTree t)     = Abs $ btree2Term t
   btree2Term (BNode lt rt) = App (btree2Term lt) (btree2Term rt)
 
   btree2TermN : Nat -> BTree -> Term
-  btree2TermN n  Leaf         = Index n
+  btree2TermN n  Leaf         = Var n
   btree2TermN n (LTree t)     = btree2TermN (S n) t
   btree2TermN n (RTree t)     = Clos (btree2Term t) (lifts (n `minus` 1) Shift)
   btree2TermN n (BNode lt rt) = Clos (btree2Term rt) (lifts (n `minus` 1) (Slash $ btree2Term lt))
@@ -160,7 +147,7 @@ sizeProp (BNode lt rt) (S k) = rewrite fst $ sizeProp lt Z in
                                       cong {f=S . S} $ sym $ plusAssociative k (S (btreeSize lt)) (btreeSize rt))
 
 -- structural invariant of btree_to_term'
-btree2TermNInv : (bt : BTree) -> (n : Nat) -> Either (btree2TermN (S n) bt = Index (n + btreeSize bt))
+btree2TermNInv : (bt : BTree) -> (n : Nat) -> Either (btree2TermN (S n) bt = Var (n + btreeSize bt))
                                                      (t ** s ** btree2TermN (S n) bt = Clos t (lifts n s))
 btree2TermNInv  Leaf       n = Left $ cong $ plusCommutative 1 n
 btree2TermNInv (LTree x)   n = case btree2TermNInv x (S n) of 
@@ -191,7 +178,7 @@ positiveBtreeSize (BNode x y) = uninhabited
 
 positiveTermSize : (t : Term) -> Not (termSize t = 0)
 positiveTermSize (Abs x)    = uninhabited
-positiveTermSize (Index k)  = uninhabited
+positiveTermSize (Var k)    = uninhabited
 positiveTermSize (App x y)  = uninhabited
 positiveTermSize (Clos x y) = uninhabited
 
@@ -238,10 +225,10 @@ injectionProp : (bt, bt1 : BTree) -> ( btree2Term bt = btree2Term bt1 -> bt = bt
                                      , (n : Nat) -> btree2TermN (S n) bt = btree2TermN (S n) bt1 -> bt = bt1
                                      )
 injectionProp  Leaf        Leaf         = (\_ => Refl, \_, _ => Refl)
-injectionProp  Leaf       (LTree l1)    = (absurd . diffTermSize {t=Index 0} {t1=btree2TermN 1 l1} 
+injectionProp  Leaf       (LTree l1)    = (absurd . diffTermSize {t=Var 0} {t1=btree2TermN 1 l1} 
                                                      (rewrite fst $ sizeProp (LTree l1) 0 in 
                                                       positiveBtreeSize l1 . sym . succInjective Z (btreeSize l1))
-                                         ,\n => absurd . diffTermSize {t=Index (S n)} {t1=btree2TermN (S (S n)) l1} 
+                                         ,\n => absurd . diffTermSize {t=Var (S n)} {t1=btree2TermN (S (S n)) l1} 
                                                            (rewrite snd $ sizeProp (LTree l1) n in 
                                                             rewrite plusAssociative n 1 (btreeSize l1) in
                                                             rewrite plusCommutative n 1 in
@@ -249,10 +236,10 @@ injectionProp  Leaf       (LTree l1)    = (absurd . diffTermSize {t=Index 0} {t1
                                                             positiveBtreeSize l1 . sym . plusLeftCancel (2+n) Z (btreeSize l1)))
 injectionProp  Leaf       (RTree r1)    = (absurd, \_ => absurd)
 injectionProp  Leaf       (BNode l1 r1) = (absurd, \_ => absurd)
-injectionProp (LTree l)    Leaf         = (absurd . diffTermSize {t=btree2TermN 1 l} {t1=Index 0} 
+injectionProp (LTree l)    Leaf         = (absurd . diffTermSize {t=btree2TermN 1 l} {t1=Var 0} 
                                                      (rewrite fst $ sizeProp (LTree l) 0 in 
                                                       positiveBtreeSize l . succInjective (btreeSize l) Z) 
-                                         ,\n => absurd . diffTermSize {t=btree2TermN (S (S n)) l} {t1=Index (S n)} 
+                                         ,\n => absurd . diffTermSize {t=btree2TermN (S (S n)) l} {t1=Var (S n)} 
                                                            (rewrite snd $ sizeProp (LTree l) n in 
                                                             rewrite plusAssociative n 1 (btreeSize l) in
                                                             rewrite plusCommutative n 1 in
@@ -283,13 +270,3 @@ injectionProp (BNode l r) (BNode l1 r1) = let
                                             rewrite ihl $ slashInj $ liftsInj n (Slash (btree2Term l)) (Slash (btree2Term l1)) lprf in 
                                             rewrite ihr rprf in
                                             Refl)
-
-data Redex : Term -> Term -> Type where
-  Beta     : Redex (App (Abs a) b)                (Clos a (Slash b))
-  AppR     : Redex (Clos (App a b) s)             (App (Clos a s) (Clos b s))
-  Lambda   : Redex (Clos (Abs a) s)               (Abs (Clos a (Lift s)))
-  FVar     : Redex (Clos (Index Z)     (Slash a))  a
-  RVar     : Redex (Clos (Index (S n)) (Slash a)) (Index n)
-  FVarLift : Redex (Clos (Index Z)     (Lift s))  (Index Z)
-  RVarLift : Redex (Clos (Index (S n)) (Lift s))  (Clos (Clos (Index n) s) Shift)
-  VarShift : Redex (Clos (Index n) Shift)         (Index (S n))

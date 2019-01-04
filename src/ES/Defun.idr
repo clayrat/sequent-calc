@@ -66,8 +66,8 @@ mutual
   intSub : Sub m n -> IntSub m n
   intSub (Rs s t)  i     = intHomR s (intSub t i)
   intSub (Ss s t)  i     = assert_total $ intHomS s (intSub t i)
-  intSub (e::_)  FZ    = e
-  intSub (_::t) (FS i) = intSub t i
+  intSub (e::_)    FZ    = e
+  intSub (_::t)   (FS i) = intSub t i
   intSub []        i     = absurd i
   intSub  I        i     = Var i
   intSub (Sw _)    FZ    = V0
