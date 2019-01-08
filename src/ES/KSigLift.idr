@@ -1,4 +1,4 @@
-module KAM.String
+module ES.KSigLift
 
 import Data.List
 import Lambda.STLC.Ty
@@ -7,7 +7,7 @@ import Lambda.STLC.Term
 %access public export
 %default total
 
--- aka k-sigma-lift machine
+-- k-sigma-lift machine
 
 mutual
   data Subst : (List Ty -> Ty -> Type) -> List Ty -> List Ty -> Type where

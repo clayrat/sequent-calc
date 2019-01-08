@@ -117,6 +117,6 @@ modules = Lambda.Untyped.Term
         , LJF.LJQ
         , LJF.LJF
 
-        , KAM.Strong
+        , ES.KSigLift
 
 opts = "-p contrib -p tparsec"
