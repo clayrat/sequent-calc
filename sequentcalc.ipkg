@@ -103,8 +103,8 @@ modules = Lambda.Ty
         , L.Scherer.CBV
         , L.Scherer.CBN
 
-        , LHR.MuKAM
-        , LHR.STLM
+        , LambdaMu.MuKAM
+        , LambdaMu.STLM
 
         , LJF.LJT
         , LJF.LJQ

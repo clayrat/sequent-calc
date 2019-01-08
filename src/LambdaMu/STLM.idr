@@ -1,4 +1,4 @@
-module STLM
+module LambdaMu.STLM
 
 import Data.List
 

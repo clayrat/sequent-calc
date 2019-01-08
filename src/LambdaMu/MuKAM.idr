@@ -1,4 +1,4 @@
-module MuKAM
+module LambdaMu.MuKAM
 
 %access public export
 %default total
