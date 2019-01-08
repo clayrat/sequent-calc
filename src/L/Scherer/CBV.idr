@@ -3,8 +3,8 @@ module L.Scherer.CBV
 import Data.List
 import Subset
 
-import Lambda.Ty
-import Lambda.Lam
+import Lambda.STLC.Ty
+import Lambda.STLC.Term
 
 %access public export
 %default total
@@ -111,10 +111,10 @@ reduceIter c = loop Z c
 
 -- STLC embedding
 
-embedTm : Tm g a -> Term g a []
-embedTm (Vr el)  = Val $ Var el
-embedTm (Lm t)   = Val $ MatC $ C (shiftTerm $ embedTm t) (CoVar Here)
-embedTm (Ap t u) = 
+embedTm : Term g a -> Term g a []
+embedTm (Var el)  = Val $ Var el
+embedTm (Lam t)   = Val $ MatC $ C (shiftTerm $ embedTm t) (CoVar Here)
+embedTm (App t u) = 
   Mu $ C (shiftTerm $ embedTm t) $ case embedTm u of
    Val v => AppC (shiftValue v) (CoVar Here)
    Mu c => Mut $ C (shiftTerm $ Mu c) (Mut $ C (Val $ Var $ There Here) (AppC (Var Here) (CoVar Here)))
@@ -122,7 +122,7 @@ embedTm (Ap t u) =
 extractTerm : Cmd g d -> (a ** Term g a d)
 extractTerm (C {a} t _) = (a ** t)
 
-runLCBV : Tm g a -> (Nat, Maybe (b ** Term g b []))
+runLCBV : Term g a -> (Nat, Maybe (b ** Term g b []))
 runLCBV t = 
   let (n,r) = reduceIter (C (embedTm t) Empty) in
   (n, extractTerm <$> r)

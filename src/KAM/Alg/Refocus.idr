@@ -1,8 +1,8 @@
-module KAMAlg.Refocus
+module KAM.Alg.Refocus
 
-import KAMAlg.Terms
-import KAMAlg.Redex
-import KAMAlg.Iterated
+import KAM.Alg.Terms
+import KAM.Alg.Redex
+import KAM.Alg.Iterated
 
 %access public export
 %default total

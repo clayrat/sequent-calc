@@ -2,7 +2,7 @@ module LJF.LJQ
 
 import Data.List
 import Subset
-import Lambda.Ty
+import Lambda.STLC.Ty
 
 %default total
 %access public export

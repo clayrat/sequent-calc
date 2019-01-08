@@ -1,7 +1,7 @@
-module KAMAlg.Iterated
+module KAM.Alg.Iterated
 
-import KAMAlg.Terms
-import KAMAlg.Redex
+import KAM.Alg.Terms
+import KAM.Alg.Redex
 
 %access public export
 %default total

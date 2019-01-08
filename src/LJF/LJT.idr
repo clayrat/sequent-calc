@@ -2,8 +2,8 @@ module LJF.LJT
 
 import Data.List
 import Subset
-import Lambda.Ty
-import Lambda.Lam
+import Lambda.STLC.Ty
+import Lambda.STLC.Term
 
 %default total
 %access public export
@@ -57,10 +57,10 @@ reduceLS  _                      = Nothing
 
 -- STLC embedding
 
-encode : Tm g a -> Async g a   
-encode (Vr e)    = Foc e Ax
-encode (Lm t)    = IR $ encode t
-encode (Ap t t2) = HC (encode t) (IL (encode t2) Ax)
+encode : Term g a -> Async g a   
+encode (Var e)    = Foc e Ax
+encode (Lam t)    = IR $ encode t
+encode (App t t2) = HC (encode t) (IL (encode t2) Ax)
 
 -- TJAM
 

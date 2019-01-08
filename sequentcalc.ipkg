@@ -2,11 +2,18 @@ package sequentcalc
 
 sourcedir = src
 
-modules = Lambda.Ty
-        , Lambda.Lam
-        , Lambda.Smallstep
-        , Lambda.KAM
-        , Lambda.CEK
+modules = Lambda.Untyped.Term
+        , Lambda.Untyped.Smallstep
+        , Lambda.Untyped.KAM
+        , Lambda.Untyped.KAM2
+        , Lambda.Untyped.CEK
+
+        , Lambda.STLC.Ty
+        , Lambda.STLC.Term
+        , Lambda.STLC.Smallstep
+        , Lambda.STLC.KAM
+        , Lambda.STLC.CEK
+        , Lambda.STLC.SECD
 
         , MuMuTilde
         , MuMuTilde.Rea1
@@ -27,11 +34,11 @@ modules = Lambda.Ty
         , Levy.TypeCheck
         , Levy.Eval
 
-        , KAMAlg.Terms
-        , KAMAlg.Redex
-        , KAMAlg.Iterated
-        , KAMAlg.Refocus
-        , KAMAlg.Machine
+        , KAM.Alg.Terms
+        , KAM.Alg.Redex
+        , KAM.Alg.Iterated
+        , KAM.Alg.Refocus
+        , KAM.Alg.Machine
 
         , KSF.Prelim
         , KSF.ListHelp
@@ -109,5 +116,7 @@ modules = Lambda.Ty
         , LJF.LJT
         , LJF.LJQ
         , LJF.LJF
+
+        , KAM.Strong
 
 opts = "-p contrib -p tparsec"

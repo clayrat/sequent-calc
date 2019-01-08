@@ -1,8 +1,8 @@
-module KAMAlg.Machine
+module KAM.Alg.Machine
 
-import KAMAlg.Terms
-import KAMAlg.Redex
-import KAMAlg.Refocus
+import KAM.Alg.Terms
+import KAM.Alg.Redex
+import KAM.Alg.Refocus
 
 %access public export
 %default total

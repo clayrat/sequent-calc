@@ -1,4 +1,4 @@
-module KAMAlg.Terms
+module KAM.Alg.Terms
 
 %access public export
 %default total

@@ -1,6 +1,6 @@
-module KAMAlg.Redex
+module KAM.Alg.Redex
 
-import KAMAlg.Terms
+import KAM.Alg.Terms
 
 %access public export
 %default total
