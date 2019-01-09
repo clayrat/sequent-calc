@@ -2,6 +2,7 @@ module LJF.LJT
 
 import Data.List
 import Subset
+import Util
 import Lambda.STLC.Ty
 import Lambda.STLC.Term
 
@@ -103,3 +104,12 @@ step (S1 (HC t   k) en        c ) = Just $ S2 t en NS k en c
 step (S2 t en b  Ax      g c) = Just $ S1 t en (append b c)
 step (S2 t en b (IL u k) g c) = Just $ S2 t en (snoc b (Cl u g)) k g c
 step _ = Nothing
+
+runTJAM : Term [] a -> (Nat, Maybe (State a))
+runTJAM = iterCount step . initState . encode
+
+test1 : runTJAM TestTm1 = (12, Just $ initState $ encode ResultTm)
+test1 = Refl
+
+test2 : runTJAM TestTm2 = (12, Just $ initState $ encode ResultTm)
+test2 = Refl

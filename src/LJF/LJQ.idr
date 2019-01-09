@@ -3,6 +3,7 @@ module LJF.LJQ
 import Data.List
 import Subset
 import Lambda.STLC.Ty
+import Lambda.STLC.Term
 
 %default total
 %access public export
@@ -47,3 +48,73 @@ reduceR (FHC a@(IR _)  (Ax  Here     )) = Just a
 reduceR (FHC   (IR _)  (Ax (There el))) = Just $ Ax el
 reduceR (FHC a@(IR _)  (IR t         )) = Just $ IR $ HC (shiftRSync a) (shiftAsync t)
 reduceR  _                              = Nothing
+
+-- STLC embedding
+
+-- Moggi's lambda-C
+mutual
+  data Val : List Ty -> Ty -> Type where
+    Var : Elem a g -> Val g a 
+    Lam : Tm (a::g) b -> Val g (a~>b)
+
+  data Tm : List Ty -> Ty -> Type where
+    V   : Val g a -> Tm g a
+    App : Tm g (a~>b) -> Tm g a -> Tm g b
+    Let : Tm g a -> Tm (a::g) b -> Tm g b  
+
+mutual 
+  shiftVal : {auto is : IsSubset g g1} -> Val g a -> Val g1 a
+  shiftVal {is} (Var el) = Var $ shift is el
+  shiftVal {is} (Lam t)  = Lam $ shiftTm {is=Cons2 is} t
+  
+  shiftTm : {auto is : IsSubset g g1} -> Tm g a -> Tm g1 a
+  shiftTm      (V v)       = V $ shiftVal v
+  shiftTm      (App t1 t2) = App (shiftTm t1) (shiftTm t2)
+  shiftTm {is} (Let m n)   = Let (shiftTm m) (shiftTm {is=Cons2 is} n)
+    
+embedLC : Term g a -> Tm g a
+embedLC (Var e)     = V $ Var e
+embedLC (Lam t)     = V $ Lam $ embedLC t
+embedLC (App t1 t2) = App (embedLC t1) (embedLC t2)
+
+mutual  
+  encodeVal : Val g a -> RSync g a
+  encodeVal (Var e) = Ax e
+  encodeVal (Lam t) = IR $ encodeTm t
+
+  encodeTm : Tm g a -> Async g a   
+  encodeTm (V    v                        ) = Foc $ encodeVal v
+  encodeTm (Let (App (V (Var e)) (V v)) p ) = IL (encodeVal v) (encodeTm p) e
+  encodeTm (Let (App (V (Lam t)) (V v)) p ) = MC (Foc $ IR $ encodeTm t) (IL (shiftRSync $ encodeVal v) (shiftAsync $ encodeTm p) Here)
+  encodeTm (Let (App (V  v     )  n   ) p ) = assert_total $ encodeTm $ Let n $ Let (App (V $ shiftVal v) (V $ Var Here)) (shiftTm p)
+  encodeTm (Let (App  m           n   ) p ) = assert_total $ encodeTm $ Let m $ Let (App (V $ Var Here) (shiftTm n)) (shiftTm p)
+  encodeTm (Let (Let  m           n   ) p ) = assert_total $ encodeTm $ Let m $ Let n (shiftTm p)
+  encodeTm (Let (V    v               ) p ) = MC (Foc $ encodeVal v) (encodeTm p)
+  encodeTm (App  t1                     t2) = assert_total $ encodeTm $ Let (App t1 t2) (V $ Var Here)
+
+encode : Term g a -> Async g a
+encode = encodeTm . embedLC  
+
+-- QJAM
+
+mutual
+  data Env : List Ty -> Type where
+    Nil  : Env []
+    (::) : Clos a -> Env g -> Env (a::g)
+  
+  data Clos : Ty -> Type where
+    Cl : RSync g a -> Env g -> Clos a
+
+data Stack : Ty -> Ty -> Type where
+  NS : Stack a a
+  CS : Clos a -> Stack b c -> Stack (a~>b) c
+
+data State : Ty -> Type where
+  S1 : Async g a -> Env g -> Stack a b -> State b
+--  S2 : Async g a -> Env g -> Stack a x -> LSync d x y -> Env d -> Stack y b -> State b  
+
+step : State b -> Maybe (State b)
+step (S1 (Foc p)    e (CS tg c)) = ?wat_1
+step (S1 (IL p t x) e        c ) = ?wat_2
+step (S1 (HC r a)   e        c ) = ?wat_3
+step _ = Nothing
