@@ -31,6 +31,7 @@ TestTm1 = App (App (Lam $ Var Here) (Lam $ Var Here)) (Lam $ Var Here)
 test1 : forget TestTm1 = Term1
 test1 = Refl
 
+-- (λx.x) ((λx.x) (λx.x))
 TestTm2 : Term [] TestTy
 TestTm2 = App (Lam $ Var Here) (App (Lam $ Var Here) (Lam $ Var Here))
 
@@ -39,6 +40,8 @@ test2 = Refl
 
 ResultTm : Term [] TestTy
 ResultTm = Lam $ Var Here  
+
+-- scott
 
 NumTy : Ty
 NumTy = A~>(A~>A)~>A
@@ -52,6 +55,8 @@ succ = Lam $ Lam $ Lam $ App (Var Here) (Var $ There $ There Here)
 one : Term [] (A~>(NumTy~>NumTy)~>NumTy)
 one = App succ zero
 
+-- church
+
 NumTy' : Ty
 NumTy' = (A~>A)~>A~>A
 
@@ -63,3 +68,13 @@ one' = Lam $ Lam $ App (Var $ There Here) (Var Here)
 
 succ' : Term [] (NumTy' ~> NumTy')
 succ' = Lam $ Lam $ Lam $ App (Var $ There Here) (App (App (Var $ There $ There Here) (Var $ There Here)) (Var Here))
+
+Sc : Term [] ((A~>(A~>A)~>A) ~> (A~>A~>A) ~> (A~>A))
+Sc = Lam $ Lam $ Lam $ App (App (Var $ There $ There Here) (Var Here)) (App (Var $ There Here) (Var Here))
+
+-- λx.λy.x, constant function, aka K combinator
+Kc1 : Term [] (A~>(A~>A)~>A)
+Kc1 = Lam $ Lam $ Var $ There Here
+
+Kc2 : Term [] (A~>A~>A)
+Kc2 = Lam $ Lam $ Var $ There Here

@@ -85,11 +85,11 @@ mutual
   encodeTm : Tm g a -> Async g a   
   encodeTm (V    v                        ) = Foc $ encodeVal v
   encodeTm (Let (App (V (Var e)) (V v)) p ) = IL (encodeVal v) (encodeTm p) e
-  encodeTm (Let (App (V (Lam t)) (V v)) p ) = MC (Foc $ IR $ encodeTm t) (IL (shiftRSync $ encodeVal v) (shiftAsync $ encodeTm p) Here)
+  encodeTm (Let (App (V (Lam t)) (V v)) p ) = HC (IR $ encodeTm t) (IL (shiftRSync $ encodeVal v) (shiftAsync $ encodeTm p) Here)
   encodeTm (Let (App (V  v     )  n   ) p ) = assert_total $ encodeTm $ Let n $ Let (App (V $ shiftVal v) (V $ Var Here)) (shiftTm p)
   encodeTm (Let (App  m           n   ) p ) = assert_total $ encodeTm $ Let m $ Let (App (V $ Var Here) (shiftTm n)) (shiftTm p)
   encodeTm (Let (Let  m           n   ) p ) = assert_total $ encodeTm $ Let m $ Let n (shiftTm p)
-  encodeTm (Let (V    v               ) p ) = MC (Foc $ encodeVal v) (encodeTm p)
+  encodeTm (Let (V    v               ) p ) = HC (encodeVal v) (encodeTm p)
   encodeTm (App  t1                     t2) = assert_total $ encodeTm $ Let (App t1 t2) (V $ Var Here)
 
 encode : Term g a -> Async g a
