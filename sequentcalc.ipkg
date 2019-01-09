@@ -123,4 +123,7 @@ modules = Lambda.Untyped.Term
         , ES.LamSig.Typed
         , ES.LamSig.Machine
 
+        , Lambda.Untyped.Strong.Scoped
+        , Lambda.Untyped.Strong.HOR
+
 opts = "-p contrib -p tparsec"
