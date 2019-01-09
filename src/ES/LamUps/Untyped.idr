@@ -1,4 +1,4 @@
-module ES.LambdaUpsilon.Untyped
+module ES.LamUps.Untyped
 
 %hide Language.Reflection.App
 %hide Interfaces.Abs

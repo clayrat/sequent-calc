@@ -55,10 +55,10 @@ modules = Lambda.Untyped.Term
         , ES.Defun
         , ES.LF
         , ES.Multi
-        , ES.LambdaUpsilon.Untyped
-        , ES.LambdaUpsilon.BTree
-        , ES.LambdaUpsilon.Typed
-        , ES.LambdaUpsilon.Umach
+        , ES.LamUps.Untyped
+        , ES.LamUps.BTree
+        , ES.LamUps.Typed
+        , ES.LamUps.Umach
 
         , ABS.L
         , ABS.AI
@@ -118,5 +118,9 @@ modules = Lambda.Untyped.Term
         , LJF.LJF
 
         , ES.KSigLift
+        , ES.LamSig.Untyped
+        , ES.LamSig.Scoped
+        , ES.LamSig.Typed
+        , ES.LamSig.Machine
 
 opts = "-p contrib -p tparsec"

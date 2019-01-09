@@ -17,7 +17,7 @@ infix 5 ~>
 
 -- unary negative formula
 data UN : NTy -> Type where
-  UA : UN AM
+  UA : UN  AM
   UU : UN (U p)
 
 mutual

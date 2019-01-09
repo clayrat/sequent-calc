@@ -1,6 +1,6 @@
-module ES.LambdaUpsilon.BTree
+module ES.LamUps.BTree
 
-import ES.LambdaUpsilon.Untyped
+import ES.LamUps.Untyped
 
 %access public export
 %default total

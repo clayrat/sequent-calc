@@ -12,7 +12,7 @@ mutual
   data Async : List Ty -> Ty -> Type where
     Foc : RSync g a -> Async g a                                     
     IL  : RSync g a -> Async (b::g) c -> Elem (a~>b) g -> Async g c  -- generalized application
-    HC  : RSync g a -> Async (a::g) b -> Async g b                   -- head cut, explicit substution
+    HC  : RSync g a -> Async (a::g) b -> Async g b                   -- head cut, explicit substitution
     MC  : Async g a -> Async (a::g) b -> Async g b                   -- mid cut, beta-redex
 
   data RSync : List Ty -> Ty -> Type where

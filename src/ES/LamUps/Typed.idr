@@ -1,6 +1,6 @@
-module ES.LambdaUpsilon.Typed
+module ES.LamUps.Typed
 
-import Lambda.Ty
+import Lambda.STLC.Ty
 import Data.List
 
 %hide Language.Reflection.App

@@ -1,6 +1,6 @@
-module ES.LambdaUpsilon.Umach
+module ES.LamUps.Umach
 
-import ES.LambdaUpsilon.Untyped
+import ES.LamUps.Untyped
 
 %access public export
 %default total
