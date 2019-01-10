@@ -1,7 +1,6 @@
-module ES.LamSig.Minimal
+module ES.LamSig.Minimal.Term
 
 import Lambda.Untyped.Term
-import Lambda.Untyped.KAM
 
 %access public export
 %default total
@@ -19,28 +18,11 @@ mutual
     Cons  : Tm -> Subs -> Subs
     Comp  : Subs -> Subs -> Subs
 
--- KAM embedding
-
 termLS : Term -> Tm    
 termLS (Var  Z)    = Var
 termLS (Var (S n)) = Clos (assert_total $ termLS $ Var n) Shift
 termLS (Lam t)     = Lam $ termLS t
 termLS (App t1 t2) = App (termLS t1) (termLS t2)
-
-mutual 
-  closLS : Clos -> Tm
-  closLS (Cl t e) = Clos (termLS t) (envLS e)
-
-  envLS : Env -> Subs
-  envLS [] = Id
-  envLS (c::e) = Cons (closLS c) (envLS e)
-
-stkRec : Tm -> Stack -> Tm  
-stkRec t []     = t
-stkRec t (c::e) = stkRec (App t (closLS c)) e
-
-stateLS : State -> Tm
-stateLS (t, e, s) = stkRec (Clos (termLS t) (envLS e)) s
 
 {-
 -- TODO scoped

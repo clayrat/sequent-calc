@@ -122,11 +122,14 @@ modules = Lambda.Untyped.Term
         , ES.LamSig.Scoped
         , ES.LamSig.Typed
         , ES.LamSig.Machine
-        , ES.LamSig.Minimal
 
         , Lambda.Untyped.Strong.Scoped
         , Lambda.Untyped.Strong.HOR
+        
         , Lambda.Untyped.Strong.KN
+        , ES.LamSig.Minimal.Term
+        , ES.LamSig.Minimal.KAM
+        , ES.LamSig.Minimal.KN
 
         , Lambda.STLC.CPS
 
