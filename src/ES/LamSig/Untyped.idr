@@ -1,7 +1,5 @@
 module ES.LamSig.Typed
 
-import Data.Fin
-
 %access public export
 %default total
 

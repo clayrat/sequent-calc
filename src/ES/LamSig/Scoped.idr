@@ -1,4 +1,4 @@
-module ES.LamSig.Typed
+module ES.LamSig.Scoped
 
 import Data.Fin
 
