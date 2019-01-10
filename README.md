@@ -21,5 +21,5 @@ Experiments with sequent calculi and abstract machines
 | `L.Scherer`                 | http://gallium.inria.fr/~scherer/research/L/tutorial-talk.pdf |
 | `LJF`                       | [Brock-Nannestad, Guenot, Gustafsson, "Computation in Focused Intuitionistic Logic"](http://www.itu.dk/people/ngue/pub/ppdp15.pdf) |
 | `ES.KSigLift`               | https://github.com/cls/strong-krivine |
-| `ES.LamSig`                 | [Abadi, Cardelli, Curien, Levy, "Explicit substitutions"](http://hpl.hp.com/techreports/Compaq-DEC/SRC-RR-54.pdf) <br> Kluge, "Abstract Computing Machines A Lambda Calculus Perspective" (sec 6.3) |
-| `Lambda.Untyped.Strong.HOR` | Kluge, "Abstract Computing Machines A Lambda Calculus Perspective" (sec 6.4) |
+| `ES.LamSig`                 | [Abadi, Cardelli, Curien, Levy, "Explicit substitutions"](http://hpl.hp.com/techreports/Compaq-DEC/SRC-RR-54.pdf) <br> Kluge, "Abstract Computing Machines" (sec 6.3) |
+| `Lambda.Untyped.Strong.HOR` | Kluge, "Abstract Computing Machines" (sec 6.4) |

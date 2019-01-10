@@ -126,4 +126,6 @@ modules = Lambda.Untyped.Term
         , Lambda.Untyped.Strong.Scoped
         , Lambda.Untyped.Strong.HOR
 
+        , Lambda.STLC.CPS
+
 opts = "-p contrib -p tparsec"
