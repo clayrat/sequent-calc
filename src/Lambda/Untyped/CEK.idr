@@ -1,50 +1,49 @@
 module Lambda.Untyped.CEK
 
-import Lambda.Untyped.Term
+import Iter
+import Lambda.Untyped.TermDB
 
 %default total
 %access public export
+
+-- http://matt.might.net/articles/cek-machines/
+-- left-to-right
 
 mutual
   Env : Type 
   Env = List Clos
 
-  data Clos = Cl Term Env
+  data Clos = Cl Term Env  -- ~(\tm,env)
 
-data Frame = Fun Term Env 
-           | Arg Clos
+-- non-empty evaluation contexts  
+data Frame = Fun Clos      -- an evaluated function, E[(cl[ ])] 
+           | Arg Term Env  -- an argument to evaluate, E[([ ]e)] where e ~ (tm,env)
 
 Stack : Type
 Stack = List Frame
 
-data State = L Term Env Stack
-           | R Clos Stack
+State : Type
+State = (Term, Env, Stack)
 
 step : State -> Maybe State
-step (L (Var  Z)    (v::_)             s ) = Just $ R  v                                  s
-step (L (Var (S n)) (_::e)             s ) = Just $ L (Var n)     e                       s
-step (L (Lam t)         e              s ) = Just $ R (Cl (Lam t) e)                      s
-step (L (App t u)       e              s ) = Just $ L u           e             (Fun t e::s)
-step (R (Cl (Lam t)     e) (Fun t1 e1::s)) = Just $ L t1          e1 (Arg (Cl (Lam t) e)::s)
-step (R (Cl (Lam t)     e) (    Arg v::s)) = Just $ L t       (v::e)                      s
-step  _                                    = Nothing
-
-stepIter : State -> (Nat, Maybe State)
-stepIter s = loop Z s
-  where
-    loop : Nat -> State -> (Nat, Maybe State)
-    loop n s1 with (step s1)
-      | Nothing = (n, Just s1)
-      | Just s2 = assert_total $ loop (S n) s2
+step (Var  Z   , Cl t e::_,                 s) = Just $ (Lam t,         e ,               s)
+step (Var (S n),      _::e,                 s) = Just $ (Var n,         e ,               s)
+step (Lam t    ,         e,      Arg t1 e1::s) = Just $ (t1   ,         e1, Fun (Cl t e)::s)
+step (Lam t    ,         e, Fun (Cl t1 e1)::s) = Just $ (t1   , Cl t e::e1,               s)
+step (App t u  ,         e,                 s) = Just $ (t    ,          e,      Arg u e::s)
+step  _                                        = Nothing
 
 runCEK : Term -> (Nat, Maybe State)
-runCEK t = stepIter $ L t [] []
+runCEK t = iterCount step (t, [], [])
 
-test0 : runCEK Term0 = (11, Just (R (Cl (Lam (Var 0)) []) []))
+private
+test0 : runCEK Term0 = (9, Just $ (Lam $ Var 0, [], []))
 test0 = Refl
 
-test1 : runCEK Term1 = (11, Just (R (Cl (Lam (Var 0)) []) []))
+private
+test1 : runCEK Term1 = (8, Just $ (Lam $ Var 0, [], []))
 test1 = Refl
 
-test2 : runCEK Term2 = (11, Just (R (Cl (Lam (Var 0)) []) []))
+private
+test2 : runCEK Term2 = (8, Just $ (Lam $ Var 0, [], []))
 test2 = Refl

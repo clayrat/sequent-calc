@@ -24,3 +24,4 @@ Experiments with sequent calculi and abstract machines
 | `ES.LamSig`                 | [Abadi, Cardelli, Curien, Levy, "Explicit substitutions"](http://hpl.hp.com/techreports/Compaq-DEC/SRC-RR-54.pdf) <br> Kluge, "Abstract Computing Machines" (sec 6.3) |
 | `Lambda.Untyped.Strong.HOR` | Kluge, "Abstract Computing Machines" (sec 6.4) |
 | `Lambda.Untyped.Strong.KN`  | Cregut, "Strongly Reducing Variants of the Krivine Abstract Machine" |
+| `ABDM`                      | Ager, Biernacki, Danvy, Midtgaard, "From Interpreter to Compiler and Virtual Machine: A Functional Derivation" |

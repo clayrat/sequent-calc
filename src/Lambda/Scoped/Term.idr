@@ -1,4 +1,4 @@
-module Lambda.Untyped.Strong.Scoped
+module Lambda.Scoped.Term
 
 import Data.Fin
 import Data.List
@@ -76,16 +76,12 @@ mutual
   isNormal (Lam t) = isNormal t
   isNormal  n      = isNeutral n
 
-step : Term n -> Maybe (Term n)
-step (App (Lam body) sub) = Just $ subst1 body sub
-step (App  t1        t2 ) = 
-  if isNeutral t1 
-    then App     t1        <$> (step t2) 
-    else App <$> (step t1) <*> Just t2
-step (Lam t)              = Lam <$> step t
-step  _ = Nothing  
+stepStr : Term n -> Maybe (Term n)
+stepStr (App (Lam t) u) = Just $ subst1 t u
+stepStr (App  t      u) = 
+  if isNeutral t 
+    then App     t           <$> (stepStr u) 
+    else App <$> (stepStr t) <*> Just u
+stepStr (Lam t)            = Lam <$> stepStr t
+stepStr  _                 = Nothing  
 
-stepIter : Term n -> Maybe (Term n)
-stepIter t with (step t)
-  | Nothing = Just t
-  | Just t2 = assert_total $ stepIter t2
