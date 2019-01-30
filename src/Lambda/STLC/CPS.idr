@@ -38,8 +38,8 @@ mapElem f (There el) = There $ mapElem f el
 
 -- Within Γ n ensures n <= length Γ
 data Within : List a -> Nat -> Type where
-    OkZ : Within g Z
-    OkS : Within g n -> Within (x::g) (S n)
+  OkZ : Within g Z
+  OkS : Within g n -> Within (x::g) (S n)
 
 -- add T to Γ as the nth element
 addToNth : (g : List a) -> (n : Nat) -> Within g n -> a -> List a
