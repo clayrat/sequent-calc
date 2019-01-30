@@ -2,11 +2,18 @@ package sequentcalc
 
 sourcedir = src
 
-modules = Lambda.Untyped.Term
+modules = Iter
+        , Subset
+
+        , Lambda.Untyped.Term
         , Lambda.Untyped.Smallstep
         , Lambda.Untyped.KAM
         , Lambda.Untyped.KAM2
         , Lambda.Untyped.CEK
+        , Lambda.Untyped.CEK2
+        , Lambda.Untyped.SECD
+        , Lambda.Untyped.CLS
+        , Lambda.Untyped.CAM
 
         , Lambda.STLC.Ty
         , Lambda.STLC.Term
@@ -98,7 +105,6 @@ modules = Lambda.Untyped.Term
 
         , NDSC
         , LK
-        , Subset
 
         , L.Spiwack.Core
         , L.Spiwack.CoreTyped
@@ -110,6 +116,7 @@ modules = Lambda.Untyped.Term
         , L.Scherer.CBV
         , L.Scherer.CBN
 
+        , LambdaMu.SmallstepNam
         , LambdaMu.MuKAM
         , LambdaMu.STLM
 
@@ -123,14 +130,18 @@ modules = Lambda.Untyped.Term
         , ES.LamSig.Typed
         , ES.LamSig.Machine
 
-        , Lambda.Untyped.Strong.Scoped
+        , Lambda.Scoped.Term
+
         , Lambda.Untyped.Strong.HOR
-        
         , Lambda.Untyped.Strong.KN
         , ES.LamSig.Minimal.Term
         , ES.LamSig.Minimal.KAM
         , ES.LamSig.Minimal.KN
 
         , Lambda.STLC.CPS
+
+        , ABDM.VKAM
+        , ABDM.VCEK
+        , ABDM.VCAM
 
 opts = "-p contrib -p tparsec"
