@@ -14,9 +14,7 @@ mutual
 Stack : Type
 Stack = List Clos
 
-data Dir : Type where
-  T : Term -> Dir
-  Ap : Dir
+data Dir = T Term | Ap
 
 State : Type
 State = (List Dir, List Env, Stack)

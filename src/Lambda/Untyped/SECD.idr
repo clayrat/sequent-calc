@@ -15,9 +15,7 @@ mutual
 Stack : Type
 Stack = List Clos
 
-data Dir : Type where
-  T : Term -> Dir
-  Ap : Dir
+data Dir = T Term | Ap
 
 Snapshot : Type 
 Snapshot = (Stack, Env, List Dir)
@@ -37,4 +35,4 @@ step ((         v::_, _,             []), (s1, e1, c1)::d) = Just ((     v::s1, 
 step _ = Nothing
 
 runSECD : Term -> (Nat, Maybe State)
-runSECD t = iterCount step $ (([], [], [T t]), [])
+runSECD t = iterCount step (([], [], [T t]), [])
