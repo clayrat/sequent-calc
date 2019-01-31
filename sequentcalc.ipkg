@@ -143,5 +143,8 @@ modules = Iter
         , ABDM.VKAM
         , ABDM.VCEK
         , ABDM.VCAM
+        , ABDM.VVEC
+        , ABDM.VCLS
+        , ABDM.VSEC
 
 opts = "-p contrib -p tparsec"
