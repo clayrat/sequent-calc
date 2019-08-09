@@ -8,6 +8,10 @@ import Data.List
 Subset : List a -> List a -> Type
 Subset {a} xs ys = {x : a} -> Elem x xs -> Elem x ys
 
+ext : Subset g d -> Subset (b::g) (b::d)
+ext _  Here      = Here
+ext r (There el) = There (r el)
+
 data IsSubset : List a -> List a -> Type where 
   Id    :                      IsSubset           l            l    
   ConsR : IsSubset     l  m -> IsSubset           l  (      a::m) 
