@@ -4,6 +4,7 @@ sourcedir = src
 
 modules = Iter
         , Subset
+        , Path
 
         , Lambda.Untyped.Term
         , Lambda.Untyped.Smallstep
@@ -30,7 +31,7 @@ modules = Iter
         , MuMuTilde.Rea1bis
         , MuMuTilde.Rea2bis
         , MuMuTilde.Rea4bis
-        
+
         , SeqCalc
         , Duploid
 
@@ -111,7 +112,7 @@ modules = Iter
         , L.Spiwack.CoreLinear
         , L.Spiwack.LinearMulAdd
         , L.Spiwack.Linear
-        
+
         , L.Scherer.MuMuT
         , L.Scherer.CBV
         , L.Scherer.CBN

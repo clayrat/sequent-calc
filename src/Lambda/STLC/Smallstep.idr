@@ -17,8 +17,10 @@ rename r (Var el)    = Var $ r el
 rename r (Lam t)     = Lam $ rename (ext r) t
 rename r (App t1 t2) = App (rename r t1) (rename r t2)
 
--- aka module: a block of terms for simultaneous substitution / a list of terms of types D all in the same context G
--- it is a profunctor
+-- aka module: 
+--  * a block of terms for simultaneous substitution 
+--  * a list of terms of types D all in the same context G 
+--  * an arrow in a category of contexts (a profunctor)
 Subst : List Ty -> List Ty -> Type
 Subst g d = {x : Ty} -> Elem x d -> Term g x
 
@@ -59,11 +61,6 @@ Scompose s1 s2 = subst s1 . s2
 -- instantiation of the last free variable of a term
 subst1 : Term (a::g) b -> Term g a -> Term g b 
 subst1 t s = subst (SCons s Sid) t
-
-isVal : Term g a -> Bool
-isVal (Lam _) = True
-isVal (Var _) = True
-isVal  _      = False
 
 step : Term g a -> Maybe (Term g a)
 step (App (Lam body) sub) = Just $ subst1 body sub

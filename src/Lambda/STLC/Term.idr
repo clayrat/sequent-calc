@@ -17,10 +17,17 @@ data Term : List Ty -> Ty -> Type where
   Lam : Term (a::g) b -> Term g (a~>b)
   App : Term g (a~>b) -> Term g a -> Term g b
 
+isVal : Term g a -> Bool
+isVal (Lam _) = True
+isVal (Var _) = True
+isVal  _      = False
+
 forget : Term g a -> Term
 forget (Var el)    = Var $ elem2Nat el
 forget (Lam t)     = Lam $ forget t
 forget (App t1 t2) = App (forget t1) (forget t2)
+
+-- examples
 
 TestTy : Ty
 TestTy = A~>A
