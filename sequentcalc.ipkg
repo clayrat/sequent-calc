@@ -15,6 +15,7 @@ modules = Iter
         , Lambda.Untyped.SECD
         , Lambda.Untyped.CLS
         , Lambda.Untyped.CAM
+        , Lambda.Untyped.CAM2
 
         , Lambda.STLC.Ty
         , Lambda.STLC.Term
