@@ -15,9 +15,6 @@ Semigroup Any where
 Monoid Any where
   neutral = GetAny False
 
-runWriter : Writer w a -> (a, w)
-runWriter = runIdentity . runWriterT  
-
 data TermType = Named | Unnamed
 
 TVar : Type
@@ -87,5 +84,5 @@ example : Nat -> Expr Unnamed
 example Z = App (App t (Var "x")) (Var "y")
   where
     t : Expr Unnamed
-    t = Lam "x" $ Lam "y" $ Mu "delta" $ Freeze "phi" $ App (Var "x") (Var "y")   
-example (S n) = App (example n) (Var ("z_" ++ show (S n)))      
+    t = Lam "x" $ Lam "y" $ Mu "delta" $ Freeze "phi" $ App (Var "x") (Var "y")
+example (S n) = App (example n) (Var ("z_" ++ show (S n)))

@@ -6,9 +6,9 @@ import Lambda.Untyped.Term
 %default total
 %access public export
 
-data I = Access Nat 
-       | Push (List I)     
-       | Close (List I) 
+data I = Access Nat
+       | Push (List I)
+       | Close (List I)
 
 compile : Term -> List I
 compile (Var n)   = [Access n]
@@ -16,7 +16,7 @@ compile (Lam t)   = [Close (compile t)]
 compile (App t u) = Push (compile u) :: compile t
 
 mutual
-  Env : Type 
+  Env : Type
   Env = List Clos
 
   data Clos = Cl (List I) Env
@@ -38,5 +38,5 @@ step (Left (C1     c e  k, v)) = Just $ Right (c,    e, C2 v k)
 step (Left (C2 (Cl c e) k, v)) = Just $ Right (c, v::e,      k)
 step  _ = Nothing
 
-run : Term -> (Nat, Maybe State)
+run : Term -> (Nat, State)
 run t = iterCount step (Right (compile t, [], Mt))

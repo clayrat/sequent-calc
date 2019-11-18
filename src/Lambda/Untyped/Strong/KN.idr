@@ -1,6 +1,5 @@
 module Lambda.Untyped.Strong.KN
 
-import Util
 import Lambda.Untyped.Term
 
 %default total
@@ -11,12 +10,12 @@ data Mark = Mk Term Nat -- portion of the normal form already built and its λ-n
 data TermN = T Term | V Nat | M Mark
 
 mutual
-  Env : Type 
+  Env : Type
   Env = List Clos
 
   data Clos = Cl TermN Env
 
-data Stor = L | MM Mark | C Clos  
+data Stor = L | MM Mark | C Clos
 
 Stack : Type
 Stack = List Stor
@@ -24,10 +23,10 @@ Stack = List Stor
 data State = More TermN Env Stack Nat
            | Done Term
 
-init : Term -> State 
+init : Term -> State
 init t = More (T t) [] [] Z
 
-step : State -> Maybe State                 
+step : State -> Maybe State
 step (More (T (App t1 t2))           e                  s  m) = Just $ More (T t1)                                         e  (C (Cl (T t2) e)::s)    m
 step (More (T (Lam t))               e            (C c::s) m) = Just $ More (T t)                                      (c::e)                   s     m
 step (More (T (Lam t))               e                  s  m) = Just $ More (T t)                        (Cl (V (S m)) []::e)               (L::s) (S m)

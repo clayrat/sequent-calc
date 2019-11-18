@@ -1,7 +1,7 @@
 module Lambda.Untyped.CEK
 
 import Iter
-import Lambda.Untyped.TermDB
+import Lambda.Untyped.Term
 
 %default total
 %access public export
@@ -10,13 +10,13 @@ import Lambda.Untyped.TermDB
 -- left-to-right
 
 mutual
-  Env : Type 
+  Env : Type
   Env = List Clos
 
   data Clos = Cl Term Env  -- ~(\tm,env)
 
--- non-empty evaluation contexts  
-data Frame = Fun Clos      -- an evaluated function, E[(cl[ ])] 
+-- non-empty evaluation contexts
+data Frame = Fun Clos      -- an evaluated function, E[(cl[ ])]
            | Arg Term Env  -- an argument to evaluate, E[([ ]e)] where e ~ (tm,env)
 
 Stack : Type
@@ -33,17 +33,17 @@ step (Lam t    ,         e, Fun (Cl t1 e1)::s) = Just $ (t1   , Cl t e::e1,     
 step (App t u  ,         e,                 s) = Just $ (t    ,          e,      Arg u e::s)
 step  _                                        = Nothing
 
-runCEK : Term -> (Nat, Maybe State)
+runCEK : Term -> (Nat, State)
 runCEK t = iterCount step (t, [], [])
 
 private
-test0 : runCEK Term0 = (9, Just $ (Lam $ Var 0, [], []))
+test0 : runCEK Term0 = (9, (Lam $ Var 0, [], []))
 test0 = Refl
 
 private
-test1 : runCEK Term1 = (8, Just $ (Lam $ Var 0, [], []))
+test1 : runCEK Term1 = (8, (Lam $ Var 0, [], []))
 test1 = Refl
 
 private
-test2 : runCEK Term2 = (8, Just $ (Lam $ Var 0, [], []))
+test2 : runCEK Term2 = (8, (Lam $ Var 0, [], []))
 test2 = Refl

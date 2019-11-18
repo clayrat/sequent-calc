@@ -1,8 +1,8 @@
-module LJF.LJT
+module LJ.LJT
 
 import Data.List
 import Subset
-import Util
+import Iter
 import Lambda.STLC.Ty
 import Lambda.STLC.Term
 
@@ -12,10 +12,10 @@ import Lambda.STLC.Term
 mutual
   data Async : List Ty -> Ty -> Type where
     Foc : Elem a g -> LSync g a b -> Async g b      -- ~contraction
-    IR  : Async (a::g) b -> Async g (a~>b)          -- lambda  
+    IR  : Async (a::g) b -> Async g (a~>b)          -- lambda
     HC  : Async g a -> LSync g a b -> Async g b     -- head cut, beta-redex
     MC  : Async g a -> Async (a::g) b -> Async g b  -- mid cut, term explicit substitution
-  
+
   data LSync : List Ty -> Ty -> Ty -> Type where
     Ax  : LSync g a a                                   -- empty list
     IL  : Async g a -> LSync g b c -> LSync g (a~>b) c  -- prepending argument
@@ -23,13 +23,13 @@ mutual
     FMC : Async g a -> LSync (a::g) b c -> LSync g b c  -- focused mid cut, list explicit substitution
 
 -- TODO for some reason totality checking takes a few minutes here without asserts
-mutual 
+mutual
   shiftAsync : {auto is : IsSubset g g1} -> Async g a -> Async g1 a
   shiftAsync {is} (Foc el k) = Foc (shift is el) (assert_total $ shiftLSync k)
   shiftAsync {is} (IR t)     = IR (assert_total $ shiftAsync {is=Cons2 is} t)
   shiftAsync      (HC t c)   = HC (assert_total $ shiftAsync t) (assert_total $ shiftLSync c)
   shiftAsync {is} (MC t t2)  = MC (assert_total $ shiftAsync t) (assert_total $ shiftAsync {is=Cons2 is} t2)
-  
+
   shiftLSync : {auto is : IsSubset g g1} -> LSync g a b -> LSync g1 a b
   shiftLSync       Ax        = Ax
   shiftLSync      (IL t c)   = IL  (assert_total $ shiftAsync t) (assert_total $ shiftLSync c)
@@ -43,7 +43,7 @@ reduceA (HC (IR t)     (IL u k)          ) = Just $ HC (MC u t) k
 --reduceA (HC (IR t)      Ax               ) = Just $ IR t
 reduceA (HC (Foc el k)  m                ) = Just $ Foc el (FHC k m)
 --reduceA (HC (HC t k)    m                ) = Just $ HC t (FHC k m)
-reduceA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync u) (shiftAsync t) 
+reduceA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync u) (shiftAsync t)
 reduceA (MC  u         (Foc  Here      k)) = Just $ HC u (FMC u k)
 reduceA (MC  u         (Foc (There el) k)) = Just $ Foc el (FMC u k)
 reduceA  _                                 = Nothing
@@ -58,7 +58,7 @@ reduceLS  _                      = Nothing
 
 -- STLC embedding
 
-encode : Term g a -> Async g a   
+encode : Term g a -> Async g a
 encode (Var e)    = Foc e Ax
 encode (Lam t)    = IR $ encode t
 encode (App t t2) = HC (encode t) (IL (encode t2) Ax)
@@ -69,11 +69,11 @@ mutual
   data Env : List Ty -> Type where
     Nil  : Env []
     (::) : Clos a -> Env g -> Env (a::g)
-  
+
   data Clos : Ty -> Type where
     Cl : Async g a -> Env g -> Clos a
 
-lookup : Elem a g -> Env g -> Clos a    
+lookup : Elem a g -> Env g -> Clos a
 lookup  Here      (c::_) = c
 lookup (There el) (_::e) = lookup el e
 
@@ -98,18 +98,18 @@ initState a = S1 a [] NS
 
 step : State b -> Maybe (State b)
 step (S1 (IR t    ) en (CS ug c)) = Just $ S1 t (ug::en) c
-step (S1 (Foc el k) en        c ) = let Cl t g = lookup el en in 
+step (S1 (Foc el k) en        c ) = let Cl t g = lookup el en in
                                     Just $ S2 t g NS k en c
 step (S1 (HC t   k) en        c ) = Just $ S2 t en NS k en c
 step (S2 t en b  Ax      g c) = Just $ S1 t en (append b c)
 step (S2 t en b (IL u k) g c) = Just $ S2 t en (snoc b (Cl u g)) k g c
 step _ = Nothing
 
-runTJAM : Term [] a -> (Nat, Maybe (State a))
+runTJAM : Term [] a -> (Nat, State a)
 runTJAM = iterCount step . initState . encode
 
-test1 : runTJAM TestTm1 = (12, Just $ initState $ encode ResultTm)
+test1 : runTJAM TestTm1 = (12, initState $ encode ResultTm)
 test1 = Refl
 
-test2 : runTJAM TestTm2 = (12, Just $ initState $ encode ResultTm)
+test2 : runTJAM TestTm2 = (12, initState $ encode ResultTm)
 test2 = Refl

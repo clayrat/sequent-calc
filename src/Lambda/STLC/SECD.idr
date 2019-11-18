@@ -55,5 +55,5 @@ step (St (Sn              s  e (Tm (App t1 t2)::c))             d ) = Just $ St 
 step (St (Sn (Cl t e1::v::s) e (            Ap::c))             d ) = Just $ St (Sn []           (v::e1) [Tm t]               ) (Sn s e c::d)
 step _ = Nothing
 
-runSECD : Term [] a -> (Nat, Maybe (State a))
+runSECD : Term [] a -> (Nat, State a)
 runSECD t = iterCount step $ St (Sn [] [] [Tm t]) []

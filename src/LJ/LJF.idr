@@ -1,4 +1,4 @@
-module LJF.LJF
+module LJ.LJF
 
 import Data.List
 import Subset
@@ -7,9 +7,9 @@ import Subset
 %access public export
 
 mutual
-  data PTy = AP | D NTy 
-  
-  data NTy = AM | U PTy | Imp PTy NTy 
+  data PTy = AP | D NTy
+
+  data NTy = AM | U PTy | Imp PTy NTy
 
 infix 5 ~>
 (~>) : PTy -> NTy -> NTy
@@ -27,9 +27,9 @@ mutual
     IR  : Async (p::g) n -> Async g (p~>n)          -- lambda
     HCL : Async g n -> LSync g n m -> Async g m     -- left head cut
     HCR : RSync g p -> Async (p::g) n -> Async g n  -- right head cut
-  
+
   data LSync : List PTy -> NTy -> NTy -> Type where
-    AxL  : UN n -> LSync g n n                
+    AxL  : UN n -> LSync g n n
     BL   : Async (p::g) m -> LSync g (U p) m             -- left blur
     IL   : RSync g p -> LSync g n m -> LSync g (p~>n) m
     FCL  : LSync g m n -> LSync g n l -> LSync g m l     -- focused left cut, concatenating contexts
@@ -40,14 +40,14 @@ mutual
     BR   : Async g n -> RSync g (D n)                -- right blur
     FCRP : RSync g p -> RSync (p::g) q -> RSync g q  -- focused right positive cut
 
-mutual 
+mutual
   shiftAsync : {auto is : IsSubset g g1} -> Async g a -> Async g1 a
   shiftAsync {is} (FL el k) = FL (shift is el) (shiftLSync k)
   shiftAsync      (FR r)    = FR $ shiftRSync r
   shiftAsync {is} (IR t)    = IR (shiftAsync {is=Cons2 is} t)
   shiftAsync      (HCL t c) = HCL (shiftAsync t) (shiftLSync c)
   shiftAsync {is} (HCR r a)  = HCR (shiftRSync r) (shiftAsync {is=Cons2 is} a)
-  
+
   shiftLSync : {auto is : IsSubset g g1} -> LSync g a b -> LSync g1 a b
   shiftLSync      (AxL prf)  = AxL ?wat0
   shiftLSync      (BL a)     = BL ?wat

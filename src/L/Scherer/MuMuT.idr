@@ -6,17 +6,17 @@ import Subset
 %access public export
 %default total
 
-data Ty = A 
+data Ty = A
         | Imp Ty Ty | Ten  Ty Ty | One  --| Bot
         | Sum Ty Ty | With Ty Ty | Zero --| Top
 
-mutual 
-  data Cmd : List Ty -> List Ty -> Type where 
+mutual
+  data Cmd : List Ty -> List Ty -> Type where
     C : Term g a d -> CoTerm g a d -> Cmd g d
 
   data Term : List Ty -> Ty -> List Ty -> Type where
     Var  : Elem a g -> Term g a d
-    Mu   : Cmd g (a::d) -> Term g a d
+    Mu   : Cmd g (a::d) -> Term g a d                            -- aka thunk
     MatC : Cmd (a::g) (b::d) -> Term g (Imp a b) d
     Pair : Term g a d -> Term g b d -> Term g (Ten a b) d
     Triv : Term g One d
@@ -26,7 +26,7 @@ mutual
 
   data CoTerm : List Ty -> Ty -> List Ty -> Type where
     CoVar : Elem a d -> CoTerm g a d
-    Mut   : Cmd (a::g) d -> CoTerm g a d
+    Mut   : Cmd (a::g) d -> CoTerm g a d                         -- aka force
     AppC  : Term g a d -> CoTerm g b d -> CoTerm g (Imp a b) d
     MatP  : Cmd (a::b::g) d -> CoTerm g (Ten a b) d
     Empty : CoTerm g Zero d
@@ -34,11 +34,11 @@ mutual
     Prjl  : CoTerm g a d -> CoTerm g (With a b) d
     Prjr  : CoTerm g b d -> CoTerm g (With a b) d
 
-mutual    
-  shiftCmd : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> Cmd g d -> Cmd g1 d1    
+mutual
+  shiftCmd : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> Cmd g d -> Cmd g1 d1
   shiftCmd (C t e) = C (shiftTerm t) (shiftCoTerm e)
 
-  shiftTerm : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> Term g a d -> Term g1 a d1    
+  shiftTerm : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> Term g a d -> Term g1 a d1
   shiftTerm {is1}       (Var el)     = Var $ shift is1 el
   shiftTerm       {is2} (Mu c)       = Mu $ shiftCmd {is2=Cons2 is2} c
   shiftTerm {is1} {is2} (MatC c)     = MatC $ shiftCmd {is1=Cons2 is1} {is2=Cons2 is2} c
@@ -48,7 +48,7 @@ mutual
   shiftTerm             (Inr t2)     = Inr $ shiftTerm t2
   shiftTerm             (MatR c1 c2) = MatR (shiftCmd c1) (shiftCmd c2)
 
-  shiftCoTerm : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> CoTerm g a d -> CoTerm g1 a d1    
+  shiftCoTerm : {auto is1 : IsSubset g g1} -> {auto is2 : IsSubset d d1} -> CoTerm g a d -> CoTerm g1 a d1
   shiftCoTerm       {is2} (CoVar el)   = CoVar $ shift is2 el
   shiftCoTerm {is1}       (Mut c)      = Mut $ shiftCmd {is1=Cons2 is1} c
   shiftCoTerm             (AppC t e)   = AppC (shiftTerm t) (shiftCoTerm e)
@@ -58,46 +58,46 @@ mutual
   shiftCoTerm             (Prjl e1)    = Prjl $ shiftCoTerm e1
   shiftCoTerm             (Prjr e2)    = Prjr $ shiftCoTerm e2
 
-let_ : Term g a d -> Term (a::g) b d -> Term g b d    
-let_ e0 e1 = Mu $ C (shiftTerm e0) 
+let_ : Term g a d -> Term (a::g) b d -> Term g b d
+let_ e0 e1 = Mu $ C (shiftTerm e0)
                     (Mut $ C (shiftTerm e1) (CoVar Here))
 
-let2 : Term g (Ten a b) d -> Term (a::b::g) c d -> Term g c d  
-let2 t u = Mu $ C (shiftTerm t) 
-                  (MatP $ C (shiftTerm u) (CoVar Here)) 
+let2 : Term g (Ten a b) d -> Term (a::b::g) c d -> Term g c d
+let2 t u = Mu $ C (shiftTerm t)
+                  (MatP $ C (shiftTerm u) (CoVar Here))
 
 lam : Term (a::g) b d -> Term g (Imp a b) d
-lam t = 
+lam t =
   MatC $ C (shiftTerm t) (CoVar Here)
 
 app : Term g (Imp a b) d -> Term g a d -> Term g b d
-app t u = 
-  Mu $ 
+app t u =
+  Mu $
   C (shiftTerm t) (AppC (shiftTerm u) (CoVar Here))
 
 callcc : Term g (Imp (Imp a b) a) (a::d) -> Term g a d
-callcc f = 
+callcc f =
   Mu $ C f
-         (AppC 
-           (MatC $ C (Var Here) 
+         (AppC
+           (MatC $ C (Var Here)
                      (CoVar $ There Here))
            (CoVar Here))
 
 pierce : Term g (Imp (Imp (Imp a b) a) a) d
-pierce = 
-  MatC $ C 
+pierce =
+  MatC $ C
     (Mu $ C (Var Here)
-            (AppC 
-              (MatC $ C (Var Here) 
+            (AppC
+              (MatC $ C (Var Here)
                         (CoVar $ There Here))
               (CoVar Here)))
     (CoVar Here)
 
--- 
-llv0 : Term [] (Imp A (Imp A A)) []      
+--
+llv0 : Term [] (Imp A (Imp A A)) []
 llv0 = lam $ lam $ Var Here
 
-llv1 : Term [] (Imp A (Imp A A)) []      
+llv1 : Term [] (Imp A (Imp A A)) []
 llv1 = lam $ lam $ Var $ There Here
 
 mutual
@@ -117,9 +117,9 @@ mutual
 
   substCoTerm : CoTerm (a::g) c d -> Term g a d -> CoTerm g c d
   substCoTerm (CoVar el)   tm = CoVar el
-  substCoTerm (Mut cmd)    tm = Mut $ subst (shiftCmd cmd) (shiftTerm tm) 
+  substCoTerm (Mut cmd)    tm = Mut $ subst (shiftCmd cmd) (shiftTerm tm)
   substCoTerm (AppC t e)   tm = AppC (substTerm t tm) (substCoTerm e tm)
-  substCoTerm (MatP cmd)   tm = MatP $ subst (shiftCmd cmd) (shiftTerm tm) 
+  substCoTerm (MatP cmd)   tm = MatP $ subst (shiftCmd cmd) (shiftTerm tm)
   substCoTerm  Empty       _  = Empty
   substCoTerm (MatS c1 c2) tm = MatS (subst (shiftCmd c1) (shiftTerm tm)) (subst (shiftCmd c2) (shiftTerm tm))
   substCoTerm (Prjl e1)    tm = Prjl $ substCoTerm e1 tm
@@ -150,9 +150,9 @@ mutual
   cosubstCoTerm (Prjl e1)          ct = Prjl $ cosubstCoTerm e1 ct
   cosubstCoTerm (Prjr e2)          ct = Prjr $ cosubstCoTerm e2 ct
 
-{-  
+{-
 reduce : Cmd g d -> Maybe (Cmd g d)
--- critical pair!  
+-- critical pair!
 reduce (C (Mu c)       e          ) = Just $ cosubst c e
 reduce (C  t          (Mut c)     ) = Just $ subst c t
 reduce (C (MatC c)    (AppC t e)  ) = Just $ subst (cosubst c (shiftCoTerm e)) (shiftTerm t)

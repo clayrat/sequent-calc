@@ -1,7 +1,6 @@
 module ES.LamSig.Machine
 
 import Data.Fin
-import Util
 import ES.LamSig.Untyped
 
 %access public export
@@ -13,7 +12,7 @@ Stack = List Term
 record State where
   constructor St
   term : Term
-  env  : Subs 
+  env  : Subs
   stk  : Stack
 
 step : State -> Maybe State
@@ -35,7 +34,7 @@ record StateS where
   constructor StS
   depth : Nat
   term : Term
-  env  : Subs 
+  env  : Subs
   stk  : Stack
 
 stepStr : StateS -> Maybe StateS
@@ -60,7 +59,7 @@ extractStr (StS n t _ _) = lams n t
   where
   lams : Nat -> Term -> Term
   lams Z     t = t
-  lams (S n) t = lams n (Lam t)  
+  lams (S n) t = lams n (Lam t)
 
 test : Term
 test = App (Lam $ Lam $ App (Var 1) (Var 0)) (Lam $ Var 0)
@@ -71,15 +70,14 @@ zero = Lam $ Lam $ Var 1
 succ : Term
 succ = Lam $ Lam $ Lam $ App (Var 0) (Var 2)
 
-one : Term 
+one : Term
 one = App succ zero
 
-zero' : Term 
+zero' : Term
 zero' = Lam $ Lam $ Var 0
 
-one' : Term 
+one' : Term
 one' = Lam $ Lam $ App (Var 1) (Var 0)
 
 succ' : Term
 succ' = Lam $ Lam $ Lam $ App (Var 1) (App (App (Var 2) (Var 1)) (Var 0))
-  

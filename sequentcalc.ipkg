@@ -21,7 +21,13 @@ modules = Iter
         , Lambda.STLC.Term
         , Lambda.STLC.Smallstep
         , Lambda.STLC.KAM
+        , Lambda.STLC.KAM0
         , Lambda.STLC.CEK
+        , Lambda.STLC.CK
+        , Lambda.STLC.CEK1
+        , Lambda.STLC.CEK2
+        , Lambda.STLC.LAM
+        , Lambda.STLC.LAM1
         , Lambda.STLC.SECD
 
         , MuMuTilde
@@ -50,7 +56,6 @@ modules = Iter
         , KAM.Alg.Machine
 
         , KSF.Prelim
-        , KSF.ListHelp
         , KSF.Lambda
         , KSF.Refinements
         , KSF.Programs
@@ -120,11 +125,10 @@ modules = Iter
 
         , LambdaMu.SmallstepNam
         , LambdaMu.MuKAM
-        , LambdaMu.STLM
 
-        , LJF.LJT
-        , LJF.LJQ
-        , LJF.LJF
+        , LJ.LJT
+        , LJ.LJQ
+        , LJ.LJF
 
         , ES.KSigLift
         , ES.LamSig.Untyped
