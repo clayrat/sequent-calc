@@ -13,7 +13,7 @@ mutual
   data Async : List Ty -> Ty -> Type where
     Foc : Elem a g -> LSync g a b -> Async g b      -- ~contraction
     IR  : Async (a::g) b -> Async g (a~>b)          -- lambda
-    HC  : Async g a -> LSync g a b -> Async g b     -- head cut, beta-redex
+    HC  : Async g a -> LSync g a b -> Async g b     -- head cut, beta-redex / generalized application
     MC  : Async g a -> Async (a::g) b -> Async g b  -- mid cut, term explicit substitution
 
   data LSync : List Ty -> Ty -> Ty -> Type where
@@ -36,25 +36,30 @@ mutual
   shiftLSync      (FHC c c2) = FHC (assert_total $ shiftLSync c) (assert_total $ shiftLSync c2)
   shiftLSync {is} (FMC t c)  = FMC (assert_total $ shiftAsync t) (assert_total $ shiftLSync {is=Cons2 is} c)
 
--- reductions (TODO useless because redexes are buried)
+mutual
+  stepA : Async g a -> Maybe (Async g a)
+  stepA (HC (IR t)     (IL u k)          ) = Just $ HC (MC u t) k
+  stepA (HC (IR t)      Ax               ) = Just $ IR t
+  stepA (HC (Foc el k)  m                ) = Just $ Foc el (FHC k m)
+--  stepA (HC (HC t k)    m                ) = Just $ HC t (FHC k m)
+  stepA (HC  k          m                ) = [| HC (stepA k) (pure m) |] <|> [| HC (pure k) (stepLS m) |]
+  stepA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync u) (shiftAsync t)
+  stepA (MC  u         (Foc  Here      k)) = Just $ HC u (FMC u k)
+  stepA (MC  u         (Foc (There el) k)) = Just $ Foc el (FMC u k)
+--  stepA (MC  u         (HC k l)          ) = Just $ HC (MC u k) (FMC u l)
+  stepA (MC  u          k                ) = [| MC (stepA u) (pure k) |] <|> [| MC (pure u) (stepA k) |]
+  stepA  _                                 = Nothing
 
-reduceA : Async g a -> Maybe (Async g a)
-reduceA (HC (IR t)     (IL u k)          ) = Just $ HC (MC u t) k
---reduceA (HC (IR t)      Ax               ) = Just $ IR t
-reduceA (HC (Foc el k)  m                ) = Just $ Foc el (FHC k m)
---reduceA (HC (HC t k)    m                ) = Just $ HC t (FHC k m)
-reduceA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync u) (shiftAsync t)
-reduceA (MC  u         (Foc  Here      k)) = Just $ HC u (FMC u k)
-reduceA (MC  u         (Foc (There el) k)) = Just $ Foc el (FMC u k)
-reduceA  _                                 = Nothing
-
-reduceLS : LSync g a b -> Maybe (LSync g a b)
-reduceLS (FHC  Ax       m      ) = Just m
-reduceLS (FHC (IL u k)  m      ) = Just $ IL u (FHC k m)
-reduceLS (FMC  _        Ax     ) = Just Ax
-reduceLS (FMC  u       (IL t k)) = Just $ IL (MC u t) (FMC u k)
--- p to x.(t k) → (p to x.t)(p to x.k) ?
-reduceLS  _                      = Nothing
+  stepLS : LSync g a b -> Maybe (LSync g a b)
+  stepLS (FHC  Ax        m       ) = Just m
+  stepLS (FHC (IL u k)   m       ) = Just $ IL u (FHC k m)
+--  stepLS (FHC (FHC k l)  m       ) = Just $ FHC k (FHC l m)
+  stepLS (FHC  k         m       ) = [| FHC (stepLS k) (pure m) |] <|> [| FHC (pure k) (stepLS m) |]
+  stepLS (FMC  _         Ax      ) = Just Ax
+  stepLS (FMC  u        (IL t k) ) = Just $ IL (MC u t) (FMC u k)
+--  stepLS (FMC  u        (FHC k l)) = Just $ FHC (FMC u k) (FMC u l)
+  stepLS (FMC  u         k       ) = [| FMC (stepA u) (pure k) |] <|> [| FMC (pure u) (stepLS k) |]
+  stepLS  _                        = Nothing
 
 -- STLC embedding
 
@@ -62,6 +67,9 @@ encode : Term g a -> Async g a
 encode (Var e)    = Foc e Ax
 encode (Lam t)    = IR $ encode t
 encode (App t t2) = HC (encode t) (IL (encode t2) Ax)
+
+stepIter : Term [] a -> (Nat, Async [] a)
+stepIter = iterCount stepA . encode
 
 -- TJAM
 
@@ -108,8 +116,16 @@ step _ = Nothing
 runTJAM : Term [] a -> (Nat, State a)
 runTJAM = iterCount step . initState . encode
 
-test1 : runTJAM TestTm1 = (12, initState $ encode ResultTm)
+-- tests
+
+test1 : stepIter TestTm1 = (10, encode ResultTm)
 test1 = Refl
 
-test2 : runTJAM TestTm2 = (12, initState $ encode ResultTm)
+test2 : stepIter TestTm2 = (10, encode ResultTm)
 test2 = Refl
+
+test3 : runTJAM TestTm1 = (12, initState $ encode ResultTm)
+test3 = Refl
+
+test4 : runTJAM TestTm2 = (12, initState $ encode ResultTm)
+test4 = Refl
