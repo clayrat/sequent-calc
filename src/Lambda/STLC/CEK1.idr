@@ -1,6 +1,7 @@
 module Lambda.STLC.CEK1
 
 import Data.List
+import Data.List.Quantifiers
 import Iter
 import Lambda.STLC.Ty
 import Lambda.STLC.Term
@@ -11,9 +12,8 @@ import Lambda.STLC.Term
 -- left-to-right call-by-value
 
 mutual
-  data Env : List Ty -> Type where
-    Nil  : Env []
-    (::) : Clos a -> Env g -> Env (a::g)
+  Env : List Ty -> Type
+  Env = All Clos
 
   data Clos : Ty -> Type where
     Cl : Term g a -> Env g -> Clos a

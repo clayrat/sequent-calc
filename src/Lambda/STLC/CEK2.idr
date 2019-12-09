@@ -11,9 +11,8 @@ import Lambda.STLC.Term
 -- left-to-right call-by-value
 
 mutual
-  data Env : List Ty -> Type where
-    Nil  : Env []
-    (::) : Clos a -> Env g -> Env (a::g)
+  Env : List Ty -> Type
+  Env = All Clos
 
   data Clos : Ty -> Type where
     Cl : Term (a::g) b -> Env g -> Clos (a~>b) -- ~(\tm,env)

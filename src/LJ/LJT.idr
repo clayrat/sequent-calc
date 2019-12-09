@@ -1,6 +1,7 @@
 module LJ.LJT
 
 import Data.List
+import Data.List.Quantifiers
 import Subset
 import Iter
 import Lambda.STLC.Ty
@@ -10,8 +11,9 @@ import Lambda.STLC.Term
 %access public export
 
 mutual
+  -- cut-free Asyncs are values
   data Async : List Ty -> Ty -> Type where
-    Foc : Elem a g -> LSync g a b -> Async g b      -- ~contraction
+    Foc : Elem a g -> LSync g a b -> Async g b      -- contraction + variable
     IR  : Async (a::g) b -> Async g (a~>b)          -- lambda
     HC  : Async g a -> LSync g a b -> Async g b     -- head cut, beta-redex / generalized application
     MC  : Async g a -> Async (a::g) b -> Async g b  -- mid cut, term explicit substitution
@@ -74,9 +76,8 @@ stepIter = iterCount stepA . encode
 -- TJAM
 
 mutual
-  data Env : List Ty -> Type where
-    Nil  : Env []
-    (::) : Clos a -> Env g -> Env (a::g)
+  Env : List Ty -> Type
+  Env = All Clos
 
   data Clos : Ty -> Type where
     Cl : Async g a -> Env g -> Clos a
@@ -86,31 +87,31 @@ lookup  Here      (c::_) = c
 lookup (There el) (_::e) = lookup el e
 
 data Stack : Ty -> Ty -> Type where
-  NS : Stack a a
-  CS : Clos a -> Stack b c -> Stack (a~>b) c
+  Mt  : Stack a a
+  Arg : Clos a -> Stack b c -> Stack (a~>b) c
 
 snoc : Stack a (b~>c) -> Clos b -> Stack a c
-snoc  NS        c = CS c NS
-snoc (CS c1 st) c = CS c1 (snoc st c)
+snoc  Mt         c = Arg c Mt
+snoc (Arg c1 st) c = Arg c1 (snoc st c)
 
 append : Stack a b -> Stack b c -> Stack a c
-append  NS       s2 = s2
-append (CS c s1) s2 = CS c (append s1 s2)
+append  Mt        s2 = s2
+append (Arg c s1) s2 = Arg c (append s1 s2)
 
 data State : Ty -> Type where
   S1 : Async g a -> Env g -> Stack a b -> State b
   S2 : Async g a -> Env g -> Stack a x -> LSync d x y -> Env d -> Stack y b -> State b
 
 initState : Async [] a -> State a
-initState a = S1 a [] NS
+initState a = S1 a [] Mt
 
 step : State b -> Maybe (State b)
-step (S1 (IR t    ) en (CS ug c)) = Just $ S1 t (ug::en) c
-step (S1 (Foc el k) en        c ) = let Cl t g = lookup el en in
-                                    Just $ S2 t g NS k en c
-step (S1 (HC t   k) en        c ) = Just $ S2 t en NS k en c
-step (S2 t en b  Ax      g c) = Just $ S1 t en (append b c)
-step (S2 t en b (IL u k) g c) = Just $ S2 t en (snoc b (Cl u g)) k g c
+step (S1 (IR t    ) en (Arg ug c)) = Just $ S1 t (ug::en) c
+step (S1 (Foc el k) en         c ) = let Cl t g = lookup el en in
+                                     Just $ S2 t g Mt k en c
+step (S1 (HC t   k) en         c ) = Just $ S2 t en Mt k en c
+step (S2 t en b  Ax      g     c ) = Just $ S1 t en (append b c)
+step (S2 t en b (IL u k) g     c ) = Just $ S2 t en (snoc b (Cl u g)) k g c
 step _ = Nothing
 
 runTJAM : Term [] a -> (Nat, State a)
