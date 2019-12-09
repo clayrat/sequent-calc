@@ -10,6 +10,11 @@ import Lambda.STLC.Term
 %default total
 %access public export
 
+-- TODO add to Data.List.Quantifiers
+indexAll : Elem x xs -> All p xs -> p x
+indexAll  Here     (p::_  ) = p
+indexAll (There e) ( _::ps) = indexAll e ps
+
 mutual
   data Async : List Ty -> Ty -> Type where
     Foc : RSync g a -> Async g a                                     -- ~dereliction
@@ -113,11 +118,7 @@ mutual
   Env = All Clos
 
   data Clos : Ty -> Type where
-    Cl : Async (a::g) b -> Env g -> Clos (a~>b)
-
-lookup : Elem a g -> Env g -> Clos a
-lookup  Here      (c::_) = c
-lookup (There el) (_::e) = lookup el e
+    Cl : RSync g a -> Env g -> Clos a
 
 data Stack : Ty -> Ty -> Type where
   Mt : Stack a a
@@ -125,19 +126,19 @@ data Stack : Ty -> Ty -> Type where
 
 data State : Ty -> Type where
   S1 : Async g a -> Env g -> Stack a b -> State b
-  S2 : RSync g a -> Env g -> Async (a::d) b -> Env d -> Stack b c -> State c
+  S2 : RSync g a -> Env g -> RSync d (a~>b) -> Env d -> Stack b c -> State c
 
 initState : Async [] a -> State a
 initState a = S1 a [] Mt
 
 step : State b -> Maybe (State b)
-step (S1 (Foc p)     e     (Fun (Cl t g) c)) = Just $ S2 p e t g c
-step (S1 (IL p t el) e                   c ) = let Cl u f = lookup el e in
-                                               Just $ S2 p e u f (Fun (Cl t e) c)
-step (S1 (HC p t)    e                   c ) = Just $ S2 p e t e c
-step (S2 (Ax el)     e t g               c ) = let Cl u f = lookup el e in
-                                               Just $ S2 (IR u) f t g c
-step (S2 (IR u)      e t g               c ) = Just $ S1 t (Cl u e :: g) c
+step (S1 (Foc p)     e          (Fun (Cl t g) c)) = Just $ S2 p e t g c
+step (S1 (IL p t el) e                        c ) = let Cl u f = indexAll el e in
+                                                    Just $ S2 p e u f (Fun (Cl (IR t) e) c)
+step (S1 (HC p t)    e                        c ) = Just $ S2 p e (IR t) e c
+step (S2 (Ax el)     e     t  g               c ) = let Cl u f = indexAll el e in
+                                                    Just $ S2 u f t g c
+step (S2 (IR u)      e (IR t) g               c ) = Just $ S1 t (Cl (IR u) e :: g) c
 step _ = Nothing
 
 runQJAM : Term [] a -> (Nat, State a)

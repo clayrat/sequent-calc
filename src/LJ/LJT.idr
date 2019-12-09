@@ -10,6 +10,11 @@ import Lambda.STLC.Term
 %default total
 %access public export
 
+-- TODO add to Data.List.Quantifiers
+indexAll : Elem x xs -> All p xs -> p x
+indexAll  Here     (p::_  ) = p
+indexAll (There e) ( _::ps) = indexAll e ps
+
 mutual
   -- cut-free Asyncs are values
   data Async : List Ty -> Ty -> Type where
@@ -82,10 +87,6 @@ mutual
   data Clos : Ty -> Type where
     Cl : Async g a -> Env g -> Clos a
 
-lookup : Elem a g -> Env g -> Clos a
-lookup  Here      (c::_) = c
-lookup (There el) (_::e) = lookup el e
-
 data Stack : Ty -> Ty -> Type where
   Mt  : Stack a a
   Arg : Clos a -> Stack b c -> Stack (a~>b) c
@@ -107,7 +108,7 @@ initState a = S1 a [] Mt
 
 step : State b -> Maybe (State b)
 step (S1 (IR t    ) en (Arg ug c)) = Just $ S1 t (ug::en) c
-step (S1 (Foc el k) en         c ) = let Cl t g = lookup el en in
+step (S1 (Foc el k) en         c ) = let Cl t g = indexAll el en in
                                      Just $ S2 t g Mt k en c
 step (S1 (HC t   k) en         c ) = Just $ S2 t en Mt k en c
 step (S2 t en b  Ax      g     c ) = Just $ S1 t en (append b c)
