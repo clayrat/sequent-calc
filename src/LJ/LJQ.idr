@@ -6,6 +6,7 @@ import Subset
 import Iter
 import Lambda.STLC.Ty
 import Lambda.STLC.Term
+import LJ.LambdaC
 
 %default total
 %access public export
@@ -63,32 +64,6 @@ mutual
   stepRS  _                              = Nothing
 
 -- STLC embedding
-
--- Moggi's lambda-C
-mutual
-  data Val : List Ty -> Ty -> Type where
-    Var : Elem a g -> Val g a
-    Lam : Tm (a::g) b -> Val g (a~>b)
-
-  data Tm : List Ty -> Ty -> Type where
-    V   : Val g a -> Tm g a
-    App : Tm g (a~>b) -> Tm g a -> Tm g b
-    Let : Tm g a -> Tm (a::g) b -> Tm g b
-
-mutual
-  shiftVal : {auto is : IsSubset g g1} -> Val g a -> Val g1 a
-  shiftVal {is} (Var el) = Var $ shift is el
-  shiftVal {is} (Lam t)  = Lam $ shiftTm {is=Cons2 is} t
-
-  shiftTm : {auto is : IsSubset g g1} -> Tm g a -> Tm g1 a
-  shiftTm      (V v)       = V $ shiftVal v
-  shiftTm      (App t1 t2) = App (shiftTm t1) (shiftTm t2)
-  shiftTm {is} (Let m n)   = Let (shiftTm m) (shiftTm {is=Cons2 is} n)
-
-embedLC : Term g a -> Tm g a
-embedLC (Var e)     = V $ Var e
-embedLC (Lam t)     = V $ Lam $ embedLC t
-embedLC (App t1 t2) = App (embedLC t1) (embedLC t2)
 
 mutual
   encodeVal : Val g a -> RSync g a
