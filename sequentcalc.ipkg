@@ -5,6 +5,7 @@ sourcedir = src
 modules = Iter
         , Subset
         , Path
+        , Elem
 
         , Lambda.Untyped.Term
         , Lambda.Untyped.Smallstep
@@ -125,6 +126,22 @@ modules = Iter
 
         , LambdaMu.SmallstepNam
         , LambdaMu.MuKAM
+        , LambdaMu.Ty
+
+        , LambdaMu.DgS.Term
+        , LambdaMu.DgS.Smallstep
+        , LambdaMu.DgS.MuKAM
+        , LambdaMu.DgS.MuCEK
+        , LambdaMu.DgS.MuKAM0
+        , LambdaMu.DgS.MuKAM2
+        , LambdaMu.DgS.MuCK
+
+        , LambdaMu.Top.Term
+        , LambdaMu.Top.Smallstep
+        , LambdaMu.Top.MuKAM
+        , LambdaMu.Top.MuCEK
+        , LambdaMu.Top.MuKAM0
+        , LambdaMu.Top.MuCK
 
         , LJ.LJT
         , LJ.LJQ

@@ -1,6 +1,7 @@
 module Lambda.STLC.CEK2
 
 import Data.List
+import Data.List.Quantifiers
 import Iter
 import Lambda.STLC.Ty
 import Lambda.STLC.Term
