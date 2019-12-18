@@ -80,6 +80,7 @@ step (App m             n               ) = Just $ Let m (App (V $ Var Here) (re
 step (Let v@(V _)       m               ) = Just $ subst1 m v
 step (Let m               (V (Var Here))) = Just m
 step (Let (Let m n)     p               ) = Just $ Let m (Let n (renameTm (ext There) p))
+step (Let m             n               ) = [| Let (step m) (pure n) |]
 step  _                                   = Nothing
 
 stepIter : Tm [] a -> (Nat, Tm [] a)
