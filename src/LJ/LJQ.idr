@@ -103,23 +103,24 @@ mutual
 
 data Stack : Ty -> Ty -> Type where
   Mt : Stack a a
-  Fun : Clos (a~>b) -> Stack b c -> Stack a c
+  Fun : Async (a::g) b -> Env g -> Stack b c -> Stack a c
 
 data State : Ty -> Type where
   S1 : Async g a -> Env g -> Stack a b -> State b
-  S2 : RSync g a -> Env g -> RSync d (a~>b) -> Env d -> Stack b c -> State c
+  S2 : RSync g a -> Env g -> Async (a::d) b -> Env d -> Stack b c -> State c
 
 initState : Async [] a -> State a
 initState a = S1 a [] Mt
 
 step : State b -> Maybe (State b)
-step (S1 (Foc p)     e          (Fun (Cl t g) c)) = Just $ S2 p e t g c
-step (S1 (IL p t el) e                        c ) = let Cl u f = indexAll el e in
-                                                    Just $ S2 p e u f (Fun (Cl (IR t) e) c)
-step (S1 (HC p t)    e                        c ) = Just $ S2 p e (IR t) e c
-step (S2 (Ax el)     e     t  g               c ) = let Cl u f = indexAll el e in
-                                                    Just $ S2 u f t g c
-step (S2 (IR u)      e (IR t) g               c ) = Just $ S1 t (Cl (IR u) e :: g) c
+step (S1 (Foc p)     e     (Fun t g c)) = Just $ S2 p e t g c
+step (S1 (IL p t el) e              c ) = case indexAll el e of
+                                            Cl (IR u) f => Just $ S2 p e u f (Fun t e c)
+                                            _ => Nothing
+step (S1 (HC p t)    e              c ) = Just $ S2 p e t e c
+step (S2 (Ax el)     e t g          c ) = let Cl lu f = indexAll el e in
+                                          Just $ S2 lu f t g c
+step (S2 (IR u)      e t g          c ) = Just $ S1 t (Cl (IR u) e :: g) c
 step _ = Nothing
 
 runQJAM : Term [] a -> (Nat, State a)
