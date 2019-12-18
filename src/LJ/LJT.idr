@@ -128,14 +128,20 @@ runTJAM = iterCount step . initState . encode
 
 -- tests
 
-test1 : stepIter TestTm1 = (10, encode ResultTm)
+test1 : stepIter TestTm0 = (5, encode ResultTm)
 test1 = Refl
 
-test2 : stepIter TestTm2 = (10, encode ResultTm)
+test2 : stepIter TestTm1 = (10, encode ResultTm)
 test2 = Refl
 
-test3 : runTJAM TestTm1 = (12, initState $ encode ResultTm)
+test3 : stepIter TestTm2 = (10, encode ResultTm)
 test3 = Refl
 
-test4 : runTJAM TestTm2 = (12, initState $ encode ResultTm)
+test4 : runTJAM TestTm0 = (6, initState $ encode ResultTm)
 test4 = Refl
+
+test5 : runTJAM TestTm1 = (12, initState $ encode ResultTm)
+test5 = Refl
+
+test6 : runTJAM TestTm2 = (12, initState $ encode ResultTm)
+test6 = Refl
