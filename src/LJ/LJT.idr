@@ -56,6 +56,7 @@ mutual
   stepA (HC (Foc el k)  m                ) = Just $ Foc el (FHC k m)
 --  stepA (HC (HC t k)    m                ) = Just $ HC t (FHC k m)
   stepA (HC  k          m                ) = [| HC (stepA k) (pure m) |] <|> [| HC (pure k) (stepLS m) |]
+
   stepA (MC  u         (IR t)            ) = Just $ IR $ MC (shiftAsync u) (shiftAsync t)
   stepA (MC  u         (Foc  Here      k)) = Just $ HC u (FMC u k)
   stepA (MC  u         (Foc (There el) k)) = Just $ Foc el (FMC u k)
@@ -68,6 +69,7 @@ mutual
   stepLS (FHC (IL u k)   m       ) = Just $ IL u (FHC k m)
 --  stepLS (FHC (FHC k l)  m       ) = Just $ FHC k (FHC l m)
   stepLS (FHC  k         m       ) = [| FHC (stepLS k) (pure m) |] <|> [| FHC (pure k) (stepLS m) |]
+
   stepLS (FMC  _         Ax      ) = Just Ax
   stepLS (FMC  u        (IL t k) ) = Just $ IL (MC u t) (FMC u k)
 --  stepLS (FMC  u        (FHC k l)) = Just $ FHC (FMC u k) (FMC u l)
@@ -113,13 +115,13 @@ initState : Async [] a -> State a
 initState a = S1 a [] Mt
 
 step : State b -> Maybe (State b)
-step (S1 (IR t    ) en (Arg ug c)) = Just $ S1 t (ug::en) c
-step (S1 (Foc el k) en         c ) = let Cl t g = indexAll el en in
-                                     Just $ S2 t g Mt k en c
-step (S1 (HC t   k) en         c ) = Just $ S2 t en Mt k en c
-step (S2 t en b  Ax      g     c ) = Just $ S1 t en (append b c)
-step (S2 t en b (IL u k) g     c ) = Just $ S2 t en (snoc b (Cl u g)) k g c
-step _ = Nothing
+step (S1 (IR t    ) e (Arg ug c)) = Just $ S1 t (ug::e) c
+step (S1 (Foc el k) e         c ) = let Cl t g = indexAll el e in
+                                    Just $ S2 t g Mt k e c
+step (S1 (HC t   k) e         c ) = Just $ S2 t e Mt k e c
+step (S2 t e b  Ax      _     c ) = Just $ S1 t e (append b c)
+step (S2 t e b (IL u k) g     c ) = Just $ S2 t e (snoc b (Cl u g)) k g c
+step  _                           = Nothing
 
 runTJAM : Term [] a -> (Nat, State a)
 runTJAM = iterCount step . initState . encode
