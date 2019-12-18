@@ -6,6 +6,9 @@ import Subset
 import Lambda.STLC.Ty
 import Lambda.STLC.Term
 
+%default total
+%access public export
+
 -- Moggi's lambda-C
 
 mutual
@@ -27,6 +30,12 @@ mutual
   renameTm sub (V v)     = V $ renameVal sub v
   renameTm sub (App t u) = App (renameTm sub t) (renameTm sub u)
   renameTm sub (Let m n) = Let (renameTm sub m) (renameTm (ext sub) n)
+
+shiftVal : {auto is : IsSubset g d} -> Val g a -> Val d a
+shiftVal {is} = renameVal (shift is)
+
+shiftTm : {auto is : IsSubset g d} -> Tm g a -> Tm d a
+shiftTm {is} = renameTm (shift is)
 
 Subst : List Ty -> List Ty -> Type
 Subst g d = {x : Ty} -> Elem x d -> Tm g x

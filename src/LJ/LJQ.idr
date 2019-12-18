@@ -31,16 +31,22 @@ mutual
     -- no focused mid cut
 
 mutual
-  shiftAsync : {auto is : IsSubset g g1} -> Async g a -> Async g1 a
-  shiftAsync      (Foc r)     = Foc $ shiftRSync r
-  shiftAsync {is} (IL r a el) = IL (shiftRSync r) (shiftAsync {is=Cons2 is} a) (shift is el)
-  shiftAsync {is} (HC r a)    = HC (shiftRSync r) (shiftAsync {is=Cons2 is} a)
-  shiftAsync {is} (MC r l)    = MC (shiftAsync r) (shiftAsync {is=Cons2 is} l)
+  renameAsync : Subset g d -> Async g a -> Async d a
+  renameAsync sub (Foc r)     = Foc $ renameRSync sub r
+  renameAsync sub (IL r a el) = IL (renameRSync sub r) (renameAsync (ext sub) a) (sub el)
+  renameAsync sub (HC r a)    = HC (renameRSync sub r) (renameAsync (ext sub) a)
+  renameAsync sub (MC r l)    = MC (renameAsync sub r) (renameAsync (ext sub) l)
 
-  shiftRSync : {auto is : IsSubset g g1} -> RSync g a -> RSync g1 a
-  shiftRSync {is} (Ax el)   = Ax $ shift is el
-  shiftRSync {is} (IR a)    = IR (shiftAsync {is=Cons2 is} a)
-  shiftRSync {is} (FHC r l) = FHC (shiftRSync r) (shiftRSync {is=Cons2 is} l)
+  renameRSync : Subset g d -> RSync g a -> RSync d a
+  renameRSync sub (Ax el)   = Ax $ sub el
+  renameRSync sub (IR a)    = IR (renameAsync (ext sub) a)
+  renameRSync sub (FHC r l) = FHC (renameRSync sub r) (renameRSync (ext sub) l)
+
+shiftAsync : {auto is : IsSubset g d} -> Async g a -> Async d a
+shiftAsync {is} = renameAsync (shift is)
+
+shiftRSync : {auto is : IsSubset g d} -> RSync g a -> RSync d a
+shiftRSync {is} = renameRSync (shift is)
 
 mutual
   stepA : Async g a -> Maybe (Async g a)

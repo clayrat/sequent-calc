@@ -29,19 +29,25 @@ mutual
     FHC : LSync g b a -> LSync g a c -> LSync g b c     -- focused head cut, concatenating contexts
     FMC : Async g a -> LSync (a::g) b c -> LSync g b c  -- focused mid cut, list explicit substitution
 
--- TODO for some reason totality checking takes a few minutes here without asserts
+-- TODO for some reason totality checking takes a few minutes here without at least 2 asserts
 mutual
-  shiftAsync : {auto is : IsSubset g g1} -> Async g a -> Async g1 a
-  shiftAsync {is} (Foc el k) = Foc (shift is el) (assert_total $ shiftLSync k)
-  shiftAsync {is} (IR t)     = IR (assert_total $ shiftAsync {is=Cons2 is} t)
-  shiftAsync      (HC t c)   = HC (assert_total $ shiftAsync t) (assert_total $ shiftLSync c)
-  shiftAsync {is} (MC t t2)  = MC (assert_total $ shiftAsync t) (assert_total $ shiftAsync {is=Cons2 is} t2)
+  renameAsync : Subset g d -> Async g a -> Async d a
+  renameAsync sub (Foc el k) = Foc (sub el) (renameLSync sub k)
+  renameAsync sub (IR t)     = IR (renameAsync (ext sub) t)
+  renameAsync sub (HC t c)   = HC (renameAsync sub t) (renameLSync sub c)
+  renameAsync sub (MC t t2)  = assert_total $ MC (renameAsync sub t) (renameAsync (ext sub) t2)
 
-  shiftLSync : {auto is : IsSubset g g1} -> LSync g a b -> LSync g1 a b
-  shiftLSync       Ax        = Ax
-  shiftLSync      (IL t c)   = IL  (assert_total $ shiftAsync t) (assert_total $ shiftLSync c)
-  shiftLSync      (FHC c c2) = FHC (assert_total $ shiftLSync c) (assert_total $ shiftLSync c2)
-  shiftLSync {is} (FMC t c)  = FMC (assert_total $ shiftAsync t) (assert_total $ shiftLSync {is=Cons2 is} c)
+  renameLSync : Subset g d -> LSync g a b -> LSync d a b
+  renameLSync sub  Ax        = Ax
+  renameLSync sub (IL t c)   = assert_total $ IL (renameAsync sub t) (renameLSync sub c)
+  renameLSync sub (FHC c c2) = FHC (renameLSync sub c) (renameLSync sub c2)
+  renameLSync sub (FMC t c)  = FMC (renameAsync sub t) (renameLSync (ext sub) c)
+
+shiftAsync : {auto is : IsSubset g d} -> Async g a -> Async d a
+shiftAsync {is} = renameAsync (shift is)
+
+shiftLSync : {auto is : IsSubset g d} -> LSync g a b -> LSync d a b
+shiftLSync {is} = renameLSync (shift is)
 
 mutual
   stepA : Async g a -> Maybe (Async g a)
