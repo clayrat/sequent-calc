@@ -90,3 +90,13 @@ embedLC : Term g a -> Tm g a
 embedLC (Var e)     = V $ Var e
 embedLC (Lam t)     = V $ Lam $ embedLC t
 embedLC (App t1 t2) = App (embedLC t1) (embedLC t2)
+
+mutual
+  forgetVal : Val g a -> Term g a
+  forgetVal (Var el) = Var el
+  forgetVal (Lam t)  = Lam $ forgetTm t
+
+  forgetTm : Tm g a -> Term g a
+  forgetTm (V v)     = forgetVal v
+  forgetTm (App m n) = App (forgetTm m) (forgetTm n)
+  forgetTm (Let n m) = App (Lam $ forgetTm m) (forgetTm n)
