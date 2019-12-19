@@ -21,15 +21,17 @@ mutual
   data Async : List Ty -> Ty -> Type where
     Foc : RSync g a -> Async g a                                     -- ~dereliction
     IL  : RSync g a -> Async (b::g) c -> Elem (a~>b) g -> Async g c  -- generalized application
-    HC  : RSync g a -> Async (a::g) b -> Async g b                   -- head cut, explicit substitution / letval
-    MC  : Async g a -> Async (a::g) b -> Async g b                   -- mid cut, beta-redex
+    HC  : RSync g a -> Async (a::g) b -> Async g b                   -- head cut, letval
+    MC  : Async g a -> Async (a::g) b -> Async g b                   -- mid cut, explicit substitution/beta-redex
 
   -- cut-free RSyncs are values
   data RSync : List Ty -> Ty -> Type where
     Ax  : Elem a g -> RSync g a                     -- variable
     IR  : Async (a::g) b -> RSync g (a~>b)          -- lambda
-    FHC : RSync g a -> RSync (a::g) b -> RSync g b  -- focused head cut
+    FHC : RSync g a -> RSync (a::g) b -> RSync g b  -- focused head cut, explicit substitution
     -- no focused mid cut
+
+-- structural rules
 
 mutual
   renameAsync : Subset g d -> Async g a -> Async d a
@@ -61,6 +63,25 @@ shiftAsync {is} = renameAsync (shift is)
 shiftRSync : {auto is : IsSubset g d} -> RSync g a -> RSync d a
 shiftRSync {is} = renameRSync (shift is)
 
+-- terms from paper
+
+lem1 : Async ((a~>b)::a::g) b
+lem1 = IL (Ax $ There Here) (Foc $ Ax Here) Here
+
+cut4 : Async g a -> RSync (a::g) b -> Async g b
+cut4 n = MC n . Foc
+
+cut5 : RSync g a -> RSync (a::g) b -> Async g b
+cut5 p q = Foc $ FHC p q
+
+IRA : Async (a::g) b -> Async g (a~>b)
+IRA = Foc . IR
+
+ILA : Async g a -> Async (b::g) c -> Elem (a~>b) g -> Async g c
+ILA n m el = MC n $ MC (IL (Ax Here) (Foc $ Ax Here) (There el)) (shiftAsync m)
+
+-- reduction
+
 mutual
   stepA : Async g a -> Maybe (Async g a)
   stepA (HC   (Ax el    )  t                 ) = Just $ renameAsync (contract el) t
@@ -84,7 +105,51 @@ mutual
   stepRS (FHC    k       m             ) = [| FHC (stepRS k) (pure m) |] <|> [| FHC (pure k) (stepRS m) |]
   stepRS  _                              = Nothing
 
--- STLC embedding
+-- strong reduction
+
+isCoval : Async g a -> Bool
+isCoval (Foc (Ax Here)) = True
+isCoval (IL p m Here)   = isJust (renameMRSync contractM p) && isJust (renameMAsync contractM (renameAsync permute m))
+isCoval  _              = False
+
+mutual
+  stepStrA : Async g a -> Maybe (Async g a)
+
+  stepStrA (HC p (Foc q)            ) = Just $ Foc $ FHC p q
+  stepStrA (HC p (IL q m  Here)     ) = Just $ MC (Foc p) (IL (FHC (shiftRSync p) (shiftRSync q))
+                                                              (HC (shiftRSync p) (shiftAsync m)) Here)
+  stepStrA (HC p (IL q m (There el))) = Just $ IL (FHC p q) (HC (shiftRSync p) (shiftAsync m)) el
+  stepStrA (HC p (MC n m)           ) = Just $ MC (HC p n) (HC (shiftRSync p) (shiftAsync m))
+  stepStrA (HC p  m                 ) = [| HC (stepStrRS p) (pure m) |] <|> [| HC (pure p) (stepStrA m) |]
+
+  stepStrA (MC (Foc (IR n))              (IL p m Here)) = do p' <- renameMRSync contractM p
+                                                             m' <- renameMAsync contractM (renameAsync permute m)
+                                                             pure $ MC (MC (Foc p') n) m'
+  stepStrA (MC (Foc (Ax el))              m           ) = Just $ renameAsync (contract el) m
+  stepStrA (MC (IL p n el)                m           ) = Just $ IL p (MC n (shiftAsync m)) el
+  stepStrA (MC (MC (Foc p) (IL q n Here)) m           ) =
+    do q' <- renameMRSync contractM q
+       n' <- renameMAsync contractM (renameAsync permute n)
+       pure $ MC (Foc p) (IL (shiftRSync q') (MC (shiftAsync n') (shiftAsync m)) Here)
+  stepStrA (MC (MC  n m)                  k           ) = Just $ MC n (MC m (shiftAsync k))
+  stepStrA (MC (Foc (IR n))               m           ) =
+    if not (isCoval m)
+      then Just $ HC (IR n) m
+      else Nothing
+  stepStrA (MC    u           k                 ) = [| MC (stepStrA u) (pure k) |] <|> [| MC (pure u) (stepStrA k) |]
+
+  stepStrA  _                                     = Nothing
+
+  stepStrRS : RSync g a -> Maybe (RSync g a)
+
+  stepStrRS (FHC p (Ax  Here)     ) = Just p
+  stepStrRS (FHC p (Ax (There el))) = Just $ Ax el
+  stepStrRS (FHC p (IR m)         ) = Just $ IR $ HC (shiftRSync p) (shiftAsync m)
+  stepStrRS (FHC p  q             ) = [| FHC (stepStrRS p) (pure q) |] <|> [| FHC (pure p) (stepStrRS q) |]
+
+  stepStrRS  _                      = Nothing
+
+-- STLC conversion
 
 mutual
   encodeVal : Val g a -> RSync g a
@@ -105,36 +170,31 @@ mutual
   encodeTm (App  m                      n ) = assert_total $
                                               encodeTm $ Let (App m n) (V $ Var Here)
 
-isPseudoVal : Async g a -> Bool
-isPseudoVal (Foc _)  = True
-isPseudoVal (HC _ m) = isPseudoVal m
-isPseudoVal  _       = False
-
-isPseudoCoval : Async g a -> Bool
-isPseudoCoval (IL p m el) = isJust (renameMAsync contractM m)
-isPseudoCoval (HC p m)    = isPseudoCoval m
-isPseudoCoval (MC m n)    = isPseudoCoval m && isJust (renameMAsync contractM n)
-isPseudoCoval  _          = False
-
-mutual
-  forgetAsync : Async g a -> Term g a
-  forgetAsync (Foc p)     = forgetRSync p
-  forgetAsync (IL p m el) = App (Lam $ forgetAsync m) (App (Var el) (forgetRSync p))
-  forgetAsync (HC p m)    = subst1 (forgetAsync m) (forgetRSync p)
-  forgetAsync (MC n m)    = if isPseudoVal n && isPseudoCoval m
-                              then subst1 (forgetAsync m) (forgetAsync n)
-                              else App (Lam $ forgetAsync m) (forgetAsync n)
-
-  forgetRSync : RSync g a -> Term g a
-  forgetRSync (Ax el)   = Var el
-  forgetRSync (IR n)    = Lam $ forgetAsync n
-  forgetRSync (FHC p q) = subst1 (forgetRSync q) (forgetRSync p)
-
 encode : Term g a -> Async g a
 encode = encodeTm . embedLC
 
+mutual
+  forgetAsyncC : Async g a -> Tm g a
+  forgetAsyncC (Foc m)     = V $ forgetRSyncC m
+  forgetAsyncC (IL p m el) = Let (App (V $ Var el) (V $ forgetRSyncC p)) (forgetAsyncC m)
+  forgetAsyncC (HC p m)    = Let (V $ forgetRSyncC p) (forgetAsyncC m)
+  forgetAsyncC (MC n m)    = subst1 (forgetAsyncC m) (forgetAsyncC n)
+
+  forgetRSyncC : RSync g a -> Val g a
+  forgetRSyncC (Ax el)   = Var el
+  forgetRSyncC (IR p)    = Lam $ forgetAsyncC p
+  forgetRSyncC (FHC p q) = subst1V (forgetRSyncC q) (forgetRSyncC p)
+
+forget : Async g a -> Term g a
+forget = forgetTm . forgetAsyncC
+
+-- reducion + conversion
+
 stepIter : Term [] a -> (Nat, Async [] a)
 stepIter = iterCount stepA . encode
+
+stepSIter : Term [] a -> (Nat, Async [] a)
+stepSIter = iterCount stepStrA . encode
 
 -- QJAM
 
@@ -175,3 +235,6 @@ resultTm = Foc $ IR $ Foc $ Ax Here
 
 testTm0 : Async [] (A~>A)
 testTm0 = HC (IR $ Foc $ Ax Here) (IL (IR $ Foc $ Ax Here) (Foc $ Ax Here) Here)
+
+testTm3 : Term [] (A~>A)
+testTm3 = (App (App (Lam $ Var Here) (Lam $ Var Here)) (App (Lam $ Var Here) (Lam $ Var Here)))
