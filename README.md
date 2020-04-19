@@ -20,6 +20,7 @@ Experiments with sequent calculi and abstract machines
 | `L.Spiwack`                 | http://assert-false.net/arnaud/papers/A%20dissection%20of%20L.pdf |
 | `L.Scherer`                 | http://gallium.inria.fr/~scherer/research/L/tutorial-talk.pdf |
 | `LJ`                        | [Brock-Nannestad, Guenot, Gustafsson, "Computation in Focused Intuitionistic Logic"](http://www.itu.dk/people/ngue/pub/ppdp15.pdf) |
+| `LJ.LJMSE`                  | [Santo, Matthes, Pinto, "Continuation-Passing Style and Strong Normalisation for Intuitionistic Sequent Calculi"](https://www.irit.fr/~Ralph.Matthes/papers/TLCA07final.pdf) |
 | `ES.KSigLift`               | https://github.com/cls/strong-krivine |
 | `ES.LamSig`                 | [Abadi, Cardelli, Curien, Levy, "Explicit substitutions"](http://hpl.hp.com/techreports/Compaq-DEC/SRC-RR-54.pdf) <br> Kluge, "Abstract Computing Machines" (sec 6.3) |
 | `Lambda.Untyped.Strong.HOR` | Kluge, "Abstract Computing Machines" (sec 6.4) |
