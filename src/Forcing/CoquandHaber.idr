@@ -47,10 +47,10 @@ Cond = List (Int,Exp)   -- uses only Zero or One
 data M a = MM (Cond -> List (Cond, a))
 
 app : M a -> Cond -> List (Cond, a)
-app (MM f) p = f p
+app (MM f) = f
 
 Functor M where
-  map f (MM t) = MM $ (map (map f)) . t
+  map f (MM t) = MM $ map (map f) . t
 
 Applicative M where
   pure x = MM $ \p => [(p,x)]
@@ -77,8 +77,7 @@ mutual
   gen : Int -> Exp -> M Exp
   gen k  Zero    = split k
   gen k (Succ e) = gen (k+1) e
-  gen k  e       = do e' <- step e
-                      gen k e'
+  gen k  e       = gen k !(step e)
 
   partial
   -- step implements the reduction
@@ -100,5 +99,4 @@ partial
 eval : Exp -> M Exp
 eval Zero = pure Zero
 eval One  = pure One
-eval t    = do t' <- step t
-               eval t'
+eval t    = eval !(step t)
