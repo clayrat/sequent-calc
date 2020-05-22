@@ -28,3 +28,4 @@ Experiments with sequent calculi and abstract machines
 | `Forcing.CoquandHaber`      | [Coquand, Jaber, "A computational interpretation of forcing in Type Theory"](http://guilhem.jaber.fr/ComputationalInterpretationForcingTypeTheory.pdf) |
 | `LJ.LJMSE`                  | [Santo, Matthes, Pinto, "Continuation-Passing Style and Strong Normalisation for Intuitionistic Sequent Calculi"](https://www.irit.fr/~Ralph.Matthes/papers/TLCA07final.pdf) |
 | `Kappa`                     | https://en.wikipedia.org/wiki/Kappa_calculus <br> [Megacz, "Abstraction Elimination for Kappa Calculus"](http://www.megacz.com/berkeley/garrows/megacz-pop-talk.pdf) |
+| `Lambda.T`                  | [Alves, Fernandez, Florido, Mackie, "Godel’s System T Revisited"](https://nms.kcl.ac.uk/maribel.fernandez/papers/TCS10.pdf) |

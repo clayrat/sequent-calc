@@ -11,17 +11,20 @@ data Term : Nat -> Type where
   Lam : Term (S n) -> Term n
   App : Term n -> Term n -> Term n
 
-V0 : Term (S n)     
-V0 = Var FZ       
-                    
-V1 : Term (2+n)     
-V1 = Var $ FS FZ  
+V0 : Term (S n)
+V0 = Var FZ
 
-V2 : Term (3+n)     
-V2 = Var $ FS $ FS FZ  
+V1 : Term (2+n)
+V1 = Var $ FS FZ
 
-V3 : Term (4+n)     
-V3 = Var $ FS $ FS $ FS FZ  
+V2 : Term (3+n)
+V2 = Var $ FS $ FS FZ
+
+V3 : Term (4+n)
+V3 = Var $ FS $ FS $ FS FZ
+
+omega : Term n
+omega = App (Lam (App V0 V0)) (Lam (App V0 V0))
 
 two : Term n
 two = Lam $ Lam $ App V1 (App V1 V0)
@@ -61,27 +64,27 @@ subst s (App t1 t2) = App (subst s t1) (subst s t2)
 
 subst1 : Term (S n) -> Term n -> Term n
 subst1 {n} b s = subst {n=S n} go b
-  where 
+  where
   go : Sub (S n) n
   go  FZ    = s
   go (FS f) = Var f
 
-mutual  
+mutual
   isNeutral : Term n -> Bool
   isNeutral (Var _)   = True
   isNeutral (App l m) = isNeutral l && isNormal m
   isNeutral  _        = False
-  
+
   isNormal : Term n -> Bool
   isNormal (Lam t) = isNormal t
   isNormal  n      = isNeutral n
 
 stepStr : Term n -> Maybe (Term n)
 stepStr (App (Lam t) u) = Just $ subst1 t u
-stepStr (App  t      u) = 
-  if isNeutral t 
-    then App     t           <$> (stepStr u) 
+stepStr (App  t      u) =
+  if isNeutral t
+    then App     t           <$> (stepStr u)
     else App <$> (stepStr t) <*> Just u
 stepStr (Lam t)            = Lam <$> stepStr t
-stepStr  _                 = Nothing  
+stepStr  _                 = Nothing
 
