@@ -1,7 +1,7 @@
 module Lambda.Cata.Smallstep
 
 import Data.Fin
---import Data.Vect
+import Data.Vect
 import Data.List
 import Data.List.Elem
 import Subset
@@ -65,31 +65,29 @@ isVal (In t)     = isVal t
 isVal (Cata _)   = True
 isVal  _         = False
 
---rho : {a, b : Ty 0} -> {f : Ty 1} -> {s : Ty 0 -> SubT 1 0} -> Term g (a ~> b) -> Term g (substT (s a) f ~> substT (s b) f)
-rho : {a, b : Ty 0} -> {f : Ty 1} -> Term g (a ~> b) -> Term g (subst1T f a ~> subst1T f b)
-rho {f=U}           tm = Lam $ Var Here
-rho {f=TVar FZ}     tm = tm
-rho {f=TVar (FS n)} tm = Lam $ Var Here
-rho {f=Imp x y}     tm = Lam $ Lam $ App (rename (There . There) $ rho tm)
+data Imps : List (Ty n) -> Vect k (Ty 0) -> Vect k (Ty 0) -> Type where
+  Nil  : Imps g [] []
+  Cons : Term g (a~>b) -> Imps g as bs -> Imps g (a::as) (b::bs)
+
+indexImps : {0 as, bs : Vect n (Ty 0)} -> Imps g as bs -> (k : Fin n) -> Term g (SubNT as k ~> SubNT bs k)
+indexImps  Nil        k     = absurd k
+indexImps (Cons t _)  FZ    = t
+indexImps (Cons _ i) (FS k) = indexImps i k
+
+rho : {r : Ty n} -> {as, bs  : Vect n (Ty 0)} -> Imps g as bs -> Term g (substNT r as ~> substNT r bs)
+rho {r=U}           tm = Lam $ Var Here
+rho {r=TVar k}      tm = indexImps tm k
+rho {r=Imp x y}     tm = Lam $ Lam $ App (rename (There . There) $ rho tm)
                                          (App (Var $ There Here) (Var Here))
-rho {f=Prod x y}    tm = Lam $ Pair (App (rename There $ rho tm) (Fst $ Var Here))
+rho {r=Prod x y}    tm = Lam $ Pair (App (rename There $ rho tm) (Fst $ Var Here))
                                     (App (rename There $ rho tm) (Snd $ Var Here))
-rho {f=Sum x y}     tm = Lam $ Case (Var Here)
+rho {r=Sum x y}     tm = Lam $ Case (Var Here)
                                     (Inl $ App (rename (There . There) $ rho tm) (Var Here))
                                     (Inr $ App (rename (There . There) $ rho tm) (Var Here))
-rho {f=Mu y}        tm = Cata $ Lam $ In $ App ?wat (Var Here) --let
---                         --                       --    s1 = (Sub1T (Mu (substT (extsT (Sub1T b)) x)))
---                         --                       --    s2 = (extsT (Sub1T a))
---                         --                       --  in
---                                               rewrite substTComp (extsT (s a)) (Sub1T (Mu (substT (extsT (s b)) y))) y in
---                                               rewrite substTComp (extsT (s b)) (Sub1T (Mu (substT (extsT (s b)) y))) y in
-----                                                let tt = substT (Sub1T (Mu (substT (extsT (Sub1T b)) y))) $ extsT (Sub1T a) FZ in
-----                                                let t2 = tt a in
---                                                ?wat--
---                                                --rename There $ rho {s= \z => substT (Sub1T (Mu (substT (extsT (s b)) y))) . extsT (s z)} tm
---                                                )
---                                               (Var Here) --$ Lam $ In $ App ?wat (Var Here)
-  --Cata $ Lam $ In $ App (rename There $ rho {a=Mu b} ?wat) (Var Here)
+rho {r=Mu y}        tm = Cata $ Lam $ In $ App (rename There $
+                                                let tt = rho {r=y} (Cons {a=Mu $ substT (extsT (SubNT bs)) y} (Lam $ Var Here) tm) in
+                                                ?wat)
+                                               (Var Here)
 
 step : {a : Ty n} -> Term g a -> Maybe (Term g a)
 step (     Pair t u)       = [| Pair (step t) (step u) |]
@@ -103,8 +101,11 @@ step (Case  t      u v)    = [| Case (step t) (pure u) (pure v) |]
 step (In t)                = In <$> step t
 step (Cata t)              = Cata <$> step t
 step (App (Lam t)  u)      = Just $ subst1 t u
-step (App (Cata t) (In u)) = Just $ App t (App (rho (Cata t)) u)
-step (App t       u)       =
+step (App (Cata {f} t) (In u)) = Just $ App t (App (rewrite sub0_1N f (Mu f) in
+                                                    rewrite sub0_1N f a in
+                                                    rho (Cons (Cata t) Nil)) u)
+step (App (Cata t) u)      = [| App (pure $ Cata t) (step u) |]   -- should switch to CBV completely?
+step (App  t       u)      =
   if isVal t
     then Nothing
     else [| App (step t) (pure u) |]
