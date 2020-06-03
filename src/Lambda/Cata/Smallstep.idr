@@ -65,31 +65,30 @@ isVal (In t)     = isVal t
 isVal (Cata _)   = True
 isVal  _         = False
 
-rho : {a, b : Ty 0} -> {f : Ty 1} -> {s : Ty 0 -> SubT 1 0} -> Term g (a ~> b) -> Term g (substT (s a) f ~> substT (s b) f)
---rho : {a, b : Ty 0} -> {f : Ty 1} -> Term g (a ~> b) -> Term g (subst1T f a ~> subst1T f b)
+--rho : {a, b : Ty 0} -> {f : Ty 1} -> {s : Ty 0 -> SubT 1 0} -> Term g (a ~> b) -> Term g (substT (s a) f ~> substT (s b) f)
+rho : {a, b : Ty 0} -> {f : Ty 1} -> Term g (a ~> b) -> Term g (subst1T f a ~> subst1T f b)
 rho {f=U}           tm = Lam $ Var Here
-rho {f=TVar FZ}     tm = ?wat0 --tm
-rho {f=TVar (FS n)} tm = ?wat1 --Lam $ Var Here
-rho {f=Imp x y}     tm = ?wat2 --Lam $ Lam $ App (rename (There . There) $ rho tm)
-                         --                (App (Var $ There Here) (Var Here))
-rho {f=Prod x y}    tm = ?wat3 --Lam $ Pair (App (rename There $ rho tm) (Fst $ Var Here))
-                         --           (App (rename There $ rho tm) (Snd $ Var Here))
-rho {f=Sum x y}     tm = ?wat4 --Lam $ Case (Var Here)
-                         --           (Inl $ App (rename (There . There) $ rho tm) (Var Here))
-                         --           (Inr $ App (rename (There . There) $ rho tm) (Var Here))
-rho {f=Mu y}        tm = Cata $ Lam $ In $ App (--let
-                         --                       --    s1 = (Sub1T (Mu (substT (extsT (Sub1T b)) x)))
-                         --                       --    s2 = (extsT (Sub1T a))
-                         --                       --  in
-                                               rewrite substTComp (extsT (s a)) (Sub1T (Mu (substT (extsT (s b)) y))) y in
-                                               rewrite substTComp (extsT (s b)) (Sub1T (Mu (substT (extsT (s b)) y))) y in
---                                                let tt = substT (Sub1T (Mu (substT (extsT (Sub1T b)) y))) $ extsT (Sub1T a) FZ in
---                                                let t2 = tt a in
-                                                ?wat
-
-                                                --rename There $ rho {s= \z => substT (Sub1T (Mu (substT (extsT (s b)) y))) . extsT (s z)} tm
-                                                )
-                                               (Var Here) --$ Lam $ In $ App ?wat (Var Here)
+rho {f=TVar FZ}     tm = tm
+rho {f=TVar (FS n)} tm = Lam $ Var Here
+rho {f=Imp x y}     tm = Lam $ Lam $ App (rename (There . There) $ rho tm)
+                                         (App (Var $ There Here) (Var Here))
+rho {f=Prod x y}    tm = Lam $ Pair (App (rename There $ rho tm) (Fst $ Var Here))
+                                    (App (rename There $ rho tm) (Snd $ Var Here))
+rho {f=Sum x y}     tm = Lam $ Case (Var Here)
+                                    (Inl $ App (rename (There . There) $ rho tm) (Var Here))
+                                    (Inr $ App (rename (There . There) $ rho tm) (Var Here))
+rho {f=Mu y}        tm = Cata $ Lam $ In $ App ?wat (Var Here) --let
+--                         --                       --    s1 = (Sub1T (Mu (substT (extsT (Sub1T b)) x)))
+--                         --                       --    s2 = (extsT (Sub1T a))
+--                         --                       --  in
+--                                               rewrite substTComp (extsT (s a)) (Sub1T (Mu (substT (extsT (s b)) y))) y in
+--                                               rewrite substTComp (extsT (s b)) (Sub1T (Mu (substT (extsT (s b)) y))) y in
+----                                                let tt = substT (Sub1T (Mu (substT (extsT (Sub1T b)) y))) $ extsT (Sub1T a) FZ in
+----                                                let t2 = tt a in
+--                                                ?wat--
+--                                                --rename There $ rho {s= \z => substT (Sub1T (Mu (substT (extsT (s b)) y))) . extsT (s z)} tm
+--                                                )
+--                                               (Var Here) --$ Lam $ In $ App ?wat (Var Here)
   --Cata $ Lam $ In $ App (rename There $ rho {a=Mu b} ?wat) (Var Here)
 
 step : {a : Ty n} -> Term g a -> Maybe (Term g a)
@@ -104,10 +103,8 @@ step (Case  t      u v)    = [| Case (step t) (pure u) (pure v) |]
 step (In t)                = In <$> step t
 step (Cata t)              = Cata <$> step t
 step (App (Lam t)  u)      = Just $ subst1 t u
-step (App (Cata t) (In u)) =
---  Just $ App t (App ?wat2 u)
-  Just $ App t (App (rho {s=Sub1T} (Cata t)) u)
-step (App t       u)      =
+step (App (Cata t) (In u)) = Just $ App t (App (rho (Cata t)) u)
+step (App t       u)       =
   if isVal t
     then Nothing
     else [| App (step t) (pure u) |]

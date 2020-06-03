@@ -54,3 +54,9 @@ l123 = In $ Inr $ Pair (In $ Inr $ In $ Inl TT) $
 -- interleaving
 FIN : Ty 0
 FIN = Mu $ Mu $ Sum U (Prod (TVar $ FS FZ) (TVar FZ))
+
+VOID : Ty n
+VOID = Mu $ TVar FZ
+
+exfalso : Term {n=0} g (VOID ~> a)
+exfalso = Cata $ Lam $ Var Here

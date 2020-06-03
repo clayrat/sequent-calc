@@ -71,7 +71,7 @@ substTComp snm smp (Sum t u)  =
   rewrite substTComp snm smp t in
   rewrite substTComp snm smp u in
   Refl
-substTComp snm smp (Mu t)     = ?wat
+substTComp snm smp (Mu t)     = ?wat0
   --rewrite substTComp (extsT snm) (extsT smp) t in
   --believe_me Refl
 
