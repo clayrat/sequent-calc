@@ -1,18 +1,21 @@
 module Subset
 
 import Data.List
+import Data.List.Elem
 
-%access public export
+--%access public export
 %default total
 
+public export
 Subset : List a -> List a -> Type
-Subset {a} xs ys = {x : a} -> Elem x xs -> Elem x ys
+Subset xs ys = {0 x : a} -> Elem x xs -> Elem x ys
 
+export
 ext : Subset g d -> Subset (b::g) (b::d)
 ext _  Here      = Here
 ext r (There el) = There (r el)
 
-contract : Elem x d -> Subset (x::d) d
+contract : Elem y d -> Subset (y::d) d
 contract el  Here     = el
 contract _  (There s) = s
 
@@ -55,12 +58,12 @@ shift (CtrT s)  (There (There el))         = There $ shift s (There el)
 -- partial subsets
 
 SubsetM : (g : List a) -> (d : List a) -> Type
-SubsetM {a} g d = {x : a} -> Elem x g -> Maybe (Elem x d)
+SubsetM {a} g d = {0 x : a} -> Elem x g -> Maybe (Elem x d)
 
 extM : SubsetM g d -> SubsetM (b::g) (b::d)
 extM _  Here      = Just Here
 extM r (There el) = There <$> r el
 
-contractM : SubsetM (x::d) d
+contractM : SubsetM (y::d) d
 contractM  Here     = Nothing
 contractM (There s) = Just s

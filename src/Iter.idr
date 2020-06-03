@@ -3,16 +3,18 @@ module Iter
 import Data.Fuel
 
 %default total
-%access public export
+--%access public export
 
+export
 iter : (a -> Maybe a) -> a -> a
-iter step = loop 
-  where 
+iter step = loop
+  where
   loop : a -> a
   loop t = case step t of
     Nothing => t
     Just t2 => assert_total $ loop t2
 
+export
 iterCount : (a -> Maybe a) -> a -> (Nat, a)
 iterCount step s = loop Z s
   where
@@ -21,11 +23,12 @@ iterCount step s = loop Z s
     Nothing => (n, s1)
     Just s2 => assert_total $ loop (S n) s2
 
+export
 iterFuel : Fuel -> (a -> Maybe a) -> a -> (Maybe Nat, a)
 iterFuel fu step s = loop fu Z s
   where
   loop : Fuel -> Nat -> a -> (Maybe Nat, a)
   loop  Dry     _ s1 = (Nothing, s1)
-  loop (More f) n s1 = case step s1 of 
+  loop (More f) n s1 = case step s1 of
     Nothing => (Just n, s1)
     Just s2 => loop f (S n) s2
