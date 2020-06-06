@@ -74,20 +74,21 @@ indexImps  Nil        k     = absurd k
 indexImps (Cons t _)  FZ    = t
 indexImps (Cons _ i) (FS k) = indexImps i k
 
-rho : {r : Ty n} -> {as, bs  : Vect n (Ty 0)} -> Imps g as bs -> Term g (substNT r as ~> substNT r bs)
-rho {r=U}           tm = Lam $ Var Here
-rho {r=TVar k}      tm = indexImps tm k
-rho {r=Imp x y}     tm = Lam $ Lam $ App (rename (There . There) $ rho tm)
-                                         (App (Var $ There Here) (Var Here))
-rho {r=Prod x y}    tm = Lam $ Pair (App (rename There $ rho tm) (Fst $ Var Here))
-                                    (App (rename There $ rho tm) (Snd $ Var Here))
-rho {r=Sum x y}     tm = Lam $ Case (Var Here)
-                                    (Inl $ App (rename (There . There) $ rho tm) (Var Here))
-                                    (Inr $ App (rename (There . There) $ rho tm) (Var Here))
-rho {r=Mu y}        tm = Cata $ Lam $ In $ App (rename There $
-                                                let tt = rho {r=y} (Cons {a=Mu $ substT (extsT (SubNT bs)) y} (Lam $ Var Here) tm) in
-                                                ?wat)
-                                               (Var Here)
+rho : {r : Ty n} -> {as, bs : Vect n (Ty 0)} -> Imps g as bs -> Term g (substNT r as ~> substNT r bs)
+rho {r=U}        tm = Lam $ Var Here
+rho {r=TVar k}   tm = indexImps tm k
+rho {r=Imp x y}  tm = Lam $ Lam $ App (rename (There . There) $ rho tm)
+                                      (App (Var $ There Here) (Var Here))
+rho {r=Prod x y} tm = Lam $ Pair (App (rename There $ rho tm) (Fst $ Var Here))
+                                 (App (rename There $ rho tm) (Snd $ Var Here))
+rho {r=Sum x y}  tm = Lam $ Case (Var Here)
+                                 (Inl $ App (rename (There . There) $ rho tm) (Var Here))
+                                 (Inr $ App (rename (There . There) $ rho tm) (Var Here))
+rho {r=Mu r}     tm = Cata $ Lam $ In $ App (rename There $
+                                             rewrite subCons {a=substNT (Mu r) bs} {as} r in
+                                             rewrite subCons {a=substNT (Mu r) bs} {as=bs} r in
+                                             rho (Cons {a=substNT (Mu r) bs} (Lam $ Var Here) tm))
+                                            (Var Here)
 
 step : {a : Ty n} -> Term g a -> Maybe (Term g a)
 step (     Pair t u)       = [| Pair (step t) (step u) |]

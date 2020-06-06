@@ -39,6 +39,9 @@ renameT r (Prod t u) = Prod (renameT r t) (renameT r u)
 renameT r (Sum t u)  = Sum (renameT r t) (renameT r u)
 renameT r (Mu t)     = Mu $ renameT (extT r) t
 
+weaken : Ty n -> Ty (S n)
+weaken = renameT FS
+
 public export
 SubT : Nat -> Nat -> Type
 SubT n m = Fin n -> Ty m
@@ -56,34 +59,6 @@ substT s (Imp t u)  = Imp t (substT s u)
 substT s (Prod t u) = Prod (substT s t) (substT s u)
 substT s (Sum t u)  = Sum (substT s t) (substT s u)
 substT s (Mu t)     = Mu $ substT (extsT s) t
-{-
-export
-substTComp : (snm : SubT n m) -> (smp : SubT m p) -> (t : Ty n) -> substT smp (substT snm t) = substT (substT smp . snm) t
-substTComp snm smp  U         = Refl
-substTComp snm smp (TVar f)   = Refl
-substTComp snm smp (Imp t u)  =
-  rewrite substTComp snm smp u in
-  Refl
-substTComp snm smp (Prod t u) =
-  rewrite substTComp snm smp t in
-  rewrite substTComp snm smp u in
-  Refl
-substTComp snm smp (Sum t u)  =
-  rewrite substTComp snm smp t in
-  rewrite substTComp snm smp u in
-  Refl
-substTComp snm smp (Mu t)     = ?wat0
-  --rewrite substTComp (extsT snm) (extsT smp) t in
-  --believe_me Refl
-  -}
-public export
-Sub1T : Ty n -> SubT (S n) n
-Sub1T a  FZ    = a
-Sub1T a (FS f) = TVar f
-
-public export
-subst1T : Ty (S n) -> Ty n -> Ty n
-subst1T b a = substT (Sub1T a) b
 
 public export
 SubNT : Vect n (Ty k) -> SubT n k
@@ -94,11 +69,18 @@ public export
 substNT : Ty n -> Vect n (Ty k) -> Ty k
 substNT b ns = substT (SubNT ns) b
 
+public export
+Sub1T : Ty n -> SubT (S n) n
+Sub1T t  FZ    = t
+Sub1T t (FS f) = TVar f
+
+public export
+subst1T : Ty (S n) -> Ty n -> Ty n
+subst1T b a = substT (Sub1T a) b
+
+export
+subCons : {a : Ty n} -> {as : Vect k (Ty n)} -> (t : Ty (S k)) ->
+           subst1T (substT (extsT (SubNT as)) t) a = substNT t (a :: as)
+
 export
 sub0_1N : (r : Ty 1) -> (v : Ty 0) -> subst1T r v = substNT r [v]
-sub0_1N  U          v = Refl
-sub0_1N (TVar FZ)   v = Refl
-sub0_1N (Imp t u)   v = cong (Imp t) $ sub0_1N u v
-sub0_1N (Prod t u)  v = rewrite sub0_1N t v in cong (Prod (substNT t [v])) $ sub0_1N u v
-sub0_1N (Sum t u)   v = rewrite sub0_1N t v in cong (Sum (substNT t [v])) $ sub0_1N u v
-sub0_1N (Mu t)      v = ?wat01N
