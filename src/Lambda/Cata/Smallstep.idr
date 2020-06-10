@@ -91,7 +91,7 @@ rho {r=Mu r}     tm = Cata $ Lam $ In $ App (rename There $
                                             (Var Here)
 
 step : {a : Ty n} -> Term g a -> Maybe (Term g a)
-step (     Pair t u)       = [| Pair (step t) (step u) |]
+step (     Pair t u)       = [| Pair (step t) (pure u) |] <|> [| Pair (pure t) (step u) |]
 step (Fst (Pair t u))      = Just t
 step (Snd (Pair t u))      = Just u
 step (      Inl t)         = Inl <$> step t

@@ -39,8 +39,9 @@ renameT r (Prod t u) = Prod (renameT r t) (renameT r u)
 renameT r (Sum t u)  = Sum (renameT r t) (renameT r u)
 renameT r (Mu t)     = Mu $ renameT (extT r) t
 
-weaken : Ty n -> Ty (S n)
-weaken = renameT FS
+export
+weakenT : Ty n -> Ty (S n)
+weakenT = renameT FS
 
 public export
 SubT : Nat -> Nat -> Type
@@ -77,6 +78,19 @@ Sub1T t (FS f) = TVar f
 public export
 subst1T : Ty (S n) -> Ty n -> Ty n
 subst1T b a = substT (Sub1T a) b
+
+export
+subWeak : (t, u : Ty n) -> subst1T (weakenT t) u = t
+subWeak  U         u = Refl
+subWeak (TVar f)   u = Refl
+subWeak (Imp t u)  v = cong (Imp t) $ subWeak u v
+subWeak (Prod t u) v = rewrite subWeak t v in
+                       rewrite subWeak u v in
+                       Refl
+subWeak (Sum t u)  v = rewrite subWeak t v in
+                       rewrite subWeak u v in
+                       Refl
+subWeak (Mu t)     u = ?wat6
 
 export
 subCons : {a : Ty n} -> {as : Vect k (Ty n)} -> (t : Ty (S k)) ->
