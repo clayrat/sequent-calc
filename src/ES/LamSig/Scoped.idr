@@ -2,16 +2,17 @@ module ES.LamSig.Scoped
 
 import Data.Fin
 
-%access public export
 %default total
 
-mutual 
+mutual
+  public export
   data Term : Nat -> Type where
-    Var  : Fin n -> Term n
+    Var  : Term n
     Lam  : Term (S n) -> Term n
     App  : Term n -> Term n -> Term n
     Clos : Term n -> Subs k n -> Term k
 
+  public export
   data Subs : Nat -> Nat -> Type where
     Id    : Subs n n
     Shift : Subs (S n) n

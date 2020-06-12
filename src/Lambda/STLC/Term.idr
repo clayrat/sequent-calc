@@ -1,17 +1,14 @@
 module Lambda.STLC.Term
 
-import Data.List
+import Data.List.Elem
+import Elem
 
 import Lambda.STLC.Ty
 import Lambda.Untyped.Term
 
 %default total
-%access public export
 
-elem2Nat : Elem a g -> Nat
-elem2Nat  Here      = Z
-elem2Nat (There el) = S (elem2Nat el)
-
+public export
 data Term : List Ty -> Ty -> Type where
   Var : Elem a g -> Term g a
   Lam : Term (a::g) b -> Term g (a~>b)
@@ -29,12 +26,15 @@ forget (App t1 t2) = App (forget t1) (forget t2)
 
 -- examples
 
+export
 TestTy : Ty
 TestTy = A~>A
 
+export
 TestTm0 : Term [] TestTy
 TestTm0 = App (Lam $ Var Here) (Lam $ Var Here)
 
+export
 TestTm1 : Term [] TestTy
 TestTm1 = App (App (Lam $ Var Here) (Lam $ Var Here)) (Lam $ Var Here)
 
@@ -53,12 +53,14 @@ ResultTm = Lam $ Var Here
 
 -- scott
 
+export
 NumTy : Ty
 NumTy = A~>(A~>A)~>A
 
 zero : Term [] NumTy
 zero = Lam $ Lam $ Var $ There Here
 
+export
 succ : Term [] (NumTy~>A~>(NumTy~>NumTy)~>NumTy)
 succ = Lam $ Lam $ Lam $ App (Var Here) (Var $ There $ There Here)
 

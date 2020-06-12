@@ -1,8 +1,8 @@
 module Lambda.Untyped.Term
 
 %default total
-%access public export
 
+public export
 data Term = Var Nat
           | Lam Term
           | App Term Term
@@ -10,9 +10,11 @@ data Term = Var Nat
 Term0 : Term
 Term0 = App (Lam $ App (Var Z) (Var Z)) (Lam $ Var Z)
 
+public export
 Term1 : Term
 Term1 = App (App (Lam $ Var Z) (Lam $ Var Z)) (Lam $ Var Z)
 
+public export
 Term2 : Term
 Term2 = App (Lam $ Var Z) (App (Lam $ Var Z) (Lam $ Var Z))
 
@@ -39,10 +41,10 @@ succ = Lam $ Lam $ Lam $ App (Var 0) (Var 2)
 pred : Term
 pred = Lam $ App (App (Var 0) zero) (Lam $ Var 0)
 
-one : Term 
+one : Term
 one = App succ zero
 
-two : Term 
+two : Term
 two = App succ one
 
 three : Term
@@ -76,9 +78,9 @@ fac : Term
 fac = App fix $ Lam $ Lam $ App (App (Var 0) one) (Lam $ App (App mul (Var 1)) (App (Var 2) (Var 0)))
 
 eqnat : Term
-eqnat = App fix $ 
-            Lam $ Lam $ Lam $ App (App (Var 1) 
-                                       (App (App (Var 0) true) (App const false))) 
+eqnat = App fix $
+            Lam $ Lam $ Lam $ App (App (Var 1)
+                                       (App (App (Var 0) true) (App const false)))
                                   (Lam $ App (App (Var 1) false) (Lam $ App (App (Var 4) (Var 1)) (Var 0)))
 
 sumto : Term
@@ -92,10 +94,10 @@ n6 = App (App add three) three
 
 -- Church encodings
 
-zero' : Term 
+zero' : Term
 zero' = Lam $ Lam $ Var 0
 
-one' : Term 
+one' : Term
 one' = Lam $ Lam $ App (Var 1) (Var 0)
 
 succ' : Term
