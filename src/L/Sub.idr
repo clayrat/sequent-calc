@@ -72,11 +72,14 @@ outr e = Mut $ C (Inr $ Var Here) (shiftCoTerm e)
 subHd : Term g (Sub a b) d -> Term g a d
 subHd t = Mu $ C (shiftTerm t) (SLam $ CoVar $ There Here)
 
+subTl : Term g b d -> CoTerm g (Sub a b) d
+subTl t = SLam $ Mut $ C (shiftTerm t) (CoVar Here)
+
 cocurry : Term g (Imp a (Sum b c)) d -> Term g (Imp (Sub a b) c) d
 cocurry t = Lam $ Mu $ C (shiftTerm t)
                          (AppC (subHd $ Var Here)
                                (MatS (C (Var $ There Here)
-                                        (SLam $ Mut $ C (Var $ There Here) (CoVar Here)))
+                                        (subTl $ Var Here))
                                      (C (Var Here) (CoVar Here))))
 
 councurry : Term g (Imp (Sub a b) c) d -> Term g (Imp a (Sum b c)) d
