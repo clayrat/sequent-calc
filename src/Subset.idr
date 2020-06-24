@@ -24,6 +24,7 @@ permute  Here              = There Here
 permute (There  Here     ) = Here
 permute (There (There el)) = There (There el)
 
+public export
 data IsSubset : List a -> List a -> Type where
   Id    :                      IsSubset           l            l
   ConsR : IsSubset     l  m -> IsSubset           l  (      a::m)
@@ -37,6 +38,7 @@ ctr : Elem a l -> IsSubset (a :: l) l
 ctr  Here      = CtrH
 ctr (There el) = CtrT $ ctr el
 
+public export
 shift : IsSubset l m -> Subset l m
 shift  Id        el                        = el
 shift (ConsR s)  el                        = There $ shift s el
