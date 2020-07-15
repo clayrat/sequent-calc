@@ -1,8 +1,10 @@
 module Elem
 
+import Data.Nat
 import Data.Fin
 import Data.List
 import Data.List.Elem
+import Data.DPair
 
 %default total
 
@@ -21,6 +23,15 @@ fin2Elem : (xs : List a) -> Fin (length xs) -> (x ** Elem x xs)
 fin2Elem (x::xs)  FZ    = (x ** Here)
 fin2Elem (x::xs) (FS f) = let (x ** p) = fin2Elem xs f in
                           (x ** There p)
+
+export
+dropSum : (n,m : Nat) -> (l : List t) -> drop n (drop m l) = drop (n+m) l
+dropSum  Z     m    l      = Refl
+dropSum (S n)  Z    l      = rewrite plusZeroRightNeutral n in Refl
+dropSum (S n) (S m) []     = Refl
+dropSum (S n) (S m) (x::l) = rewrite plusAssociative n 1 m in
+                             rewrite plusCommutative n 1 in
+                             dropSum (S n) m l
 
 public export
 dropWithElem : (g : List t) -> Elem a g -> List t

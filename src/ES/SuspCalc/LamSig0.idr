@@ -29,14 +29,6 @@ id = Shift 0
 cons : Tm g a -> Subs g d -> Subs g (a::d)
 cons = Cons
 
-dropSum : (n,m : Nat) -> (l : List t) -> drop n (drop m l) = drop (n+m) l
-dropSum  Z     m    l      = Refl
-dropSum (S n)  Z    l      = rewrite plusZeroRightNeutral n in Refl
-dropSum (S n) (S m) []     = Refl
-dropSum (S n) (S m) (x::l) = rewrite plusAssociative n 1 m in
-                             rewrite plusCommutative n 1 in
-                             dropSum (S n) m l
-
 compose : Subs g e -> Subs e d -> Subs g d
 compose (Shift n)  (Shift  m   ) = rewrite dropSum m n g in Shift (m+n)
 compose  r         (Shift  Z   ) = r

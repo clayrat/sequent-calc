@@ -21,7 +21,7 @@ mutual
   public export
   data Subs : List Ty -> List Ty -> Type where
     Id     : Subs g g
-    Shift  : (n : Nat) -> Subs (drop n g) d -> Subs g d
+    Shift  : (n : Nat) -> Subs (drop (S n) g) d -> Subs g d
     Cons   : Tm g a -> Subs g d -> Subs g (a::d)
 
 id : Subs g g
@@ -31,29 +31,28 @@ cons : Tm g a -> Subs g d -> Subs g (a::d)
 cons = Cons
 
 lift : Subs g d -> Subs (a::g) (a::d)
-lift s = Cons (Var Here) (Shift 1 s)
+lift s = Cons (Var Here) (Shift Z s)
 
-lookup1 : Nat -> Elem a g -> Subs d g -> Tm d a
-lookup1 o el  Id         = Var ?wat
-lookup1 o el (Shift n s) =
-  let tt = lookup1 (o+n) el s in
-  ?wat2
-lookup1 Z Here (Cons t s)  = t
-lookup1 (S o) Here (Cons t s)  = Clos t (let tt = Shift o Id in ?wat4)
-lookup1 o (There el) (Cons t s)  = lookup1 o el s
+lookup1 : {d : List Ty} -> (o : Nat) -> Elem a g -> Subs (drop o d) g -> Tm d a
+lookup1  o     el         Id         = Var $ addToElem o el
+lookup1  o     el        (Shift n s) = assert_total $
+                                       lookup1 (S n + o) el (rewrite sym $ dropSum (S n) o d in s)
+lookup1  Z     Here      (Cons t s)  = t
+lookup1 (S o)  Here      (Cons t s)  = Clos t (Shift o Id)
+lookup1  o    (There el) (Cons t s)  = lookup1 o el s
 
-lookup : Elem a g -> Subs d g -> Tm d a
+lookup : {d : List Ty} -> Elem a g -> Subs d g -> Tm d a
 lookup el s = lookup1 Z el s
 
-{-
 compose : Subs g e -> Subs e d -> Subs g d
-compose (Shift n)  (Shift  m   ) = rewrite dropSum m n g in Shift (m+n)
-compose  r         (Shift  Z   ) = r
-compose (Cons _ u) (Shift (S n)) = compose u (Shift n)
-compose  r         (Cons t s)    = Cons (Clos t r) (compose r s)
-                             -}
+compose  Id          u              = u
+-- coverage checker bug? can't replace `Cons t s` with just `s`
+compose (Cons t s)   Id             = Cons t s
+compose (Shift n s)  u              = Shift n (compose s u)
+compose (Cons t s)  (Shift  Z    u) = compose s u
+compose (Cons t s)  (Shift (S n) u) = compose s (Shift n u)
+compose  s          (Cons t u)      = Cons (Clos t s) (compose s u)
 
-{-
 encode : Term g a -> Tm g a
 encode (Var el)  = Var el
 encode (Lam t)   = Lam $ encode t
@@ -74,8 +73,7 @@ step (Clos (Var e)    s ) = Just $ lookup e s
 step (Clos (App t u)  s ) = Just $ App (Clos t s) (Clos u s)
 step (Clos (Lam t)    s ) = Just $ Lam $ Clos t (lift s)
 step (Clos (Clos t s) r ) = Just $ Clos t (compose r s)
-step  _                                        = Nothing
+step  _                   = Nothing
 
 stepIter : {g : List Ty} -> Tm g a -> Tm g a
 stepIter = iter step
-  -}
