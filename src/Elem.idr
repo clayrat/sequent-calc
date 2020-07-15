@@ -26,3 +26,9 @@ public export
 dropWithElem : (g : List t) -> Elem a g -> List t
 dropWithElem (x::xs)  Here      = xs
 dropWithElem (x::xs) (There el) = dropWithElem xs el
+
+public export
+addToElem : {d : List t} -> (n : Nat) -> Elem a (drop n d) -> Elem a d
+addToElem           Z    el = el
+addToElem {d=[]}   (S n) el = absurd el
+addToElem {d=x::d} (S n) el = There $ addToElem n el
