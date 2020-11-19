@@ -26,3 +26,4 @@ Experiments with sequent calculi and abstract machines
 | `Kappa`                     | https://en.wikipedia.org/wiki/Kappa_calculus <br> [Megacz, "Abstraction Elimination for Kappa Calculus"](http://www.megacz.com/berkeley/garrows/megacz-pop-talk.pdf) |
 | `Lambda.T`                  | [Alves, Fernandez, Florido, Mackie, "Godel’s System T Revisited"](https://nms.kcl.ac.uk/maribel.fernandez/papers/TCS10.pdf) |
 | `LambdaMu.Delim.Top`        | [Ariola, Herbelin, Sabry, "A type-theoretic foundation of delimited continuations"](https://www.cs.indiana.edu/~sabry/papers/contFoundationLong.pdf) </br> [Herbelin, Ghilezan, "An approach to call-by-name delimited continuations"](https://hal.inria.fr/inria-00524949/document) |
+| `Lambda.PCFV`               | [Harper, "PFPL Supplement: PCF By Value"](https://www.cs.cmu.edu/~rwh/pfpl/supplements/pcfv.pdf) |
