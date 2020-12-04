@@ -55,8 +55,24 @@ ap : Comp g (a~>b) -> Comp g a -> Comp g b
 ap t u = lt t $ lt (renameC There u) $ App (Var $ There Here) (Var Here)
 
 export
+idid : Comp g (A~>A)
+idid = ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here)
+
+export
+idid_id : Comp g (A~>A)
+idid_id = ap (ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here)) (V $ Lam $ V $ Var Here)
+
+export
+id_idid : Comp g (A~>A)
+id_idid = ap (V $ Lam $ V $ Var Here) (ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here))
+
+export
+bam0 : Comp g A
+bam0 = Fix $ V $ Succ $ Var Here
+
+export
 bam : Comp g A
-bam = ap (V $ Lam $ V Zero) (Fix $ V $ Succ $ Var Here)
+bam = ap (V $ Lam $ V Zero) bam0
 
 fromN : Nat -> Val g A
 fromN  Z    = Zero
