@@ -57,15 +57,15 @@ ap t u = lt t $ lt (renameC There u) $ App (Var $ There Here) (Var Here)
 
 export
 idid : Comp g (A~>A)
-idid = ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here)
+idid = App (Lam $ V $ Var Here) (Lam $ V $ Var Here)
 
 export
 idid_id : Comp g (A~>A)
-idid_id = ap (ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here)) (V $ Lam $ V $ Var Here)
+idid_id = ap (App (Lam $ V $ Var Here) (Lam $ V $ Var Here)) (V $ Lam $ V $ Var Here)
 
 export
 id_idid : Comp g (A~>A)
-id_idid = ap (V $ Lam $ V $ Var Here) (ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here))
+id_idid = ap (V $ Lam $ V $ Var Here) (App (Lam $ V $ Var Here) (Lam $ V $ Var Here))
 
 export
 bam0 : Val g (C A)
