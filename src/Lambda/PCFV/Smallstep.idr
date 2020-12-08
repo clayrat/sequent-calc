@@ -20,13 +20,13 @@ mutual
   substVV s  Zero    = Zero
   substVV s (Succ v) = Succ $ substVV s v
   substVV s (Lam c)  = Lam $ substVC (extsV s) c
+  substVV s (Fix c)  = Fix $ substVC (extsV s) c
   substVV s (Wrap c) = Wrap $ substVC s c
 
   substVC : SubstV g d -> Comp g a -> Comp d a
   substVC s (V v)       = V $ substVV s v
   substVC s (App v w)   = App (substVV s v) (substVV s w)
   substVC s (If0 v c d) = If0 (substVV s v) (substVC s c) (substVC (extsV s) d)
-  substVC s (Fix c)     = Fix $ substVC (extsV s) c
   substVC s (Bnd v c)   = Bnd (substVV s v) (substVC (extsV s) c)
 
 sub1 : Val g a -> SubstV (a::g) g
@@ -39,23 +39,14 @@ subst1VV v w = substVV (sub1 v) w
 subst1VC : Val g a -> Comp (a::g) b -> Comp g b
 subst1VC v c = substVC (sub1 v) c
 
-subst1CC : Comp g a -> Comp (a::g) b -> Comp g b
-subst1CC (V v)              e = subst1VC v e
-subst1CC (App (Lam c) v)    e = assert_total $ subst1CC (subst1VC v c) e --???
-subst1CC (App v w)          e = Bnd (Wrap $ App v w) e
-subst1CC (If0  Zero    t f) e = assert_total $ subst1CC t e              --???
-subst1CC (If0 (Succ v) t f) e = assert_total $ subst1CC (subst1VC v f) e --???
-subst1CC (If0 v c d)        e = Bnd (Wrap $ If0 v c d) e
-subst1CC (Fix c)            e = Bnd (Wrap $ Fix c) e --(subst1CC c (renameC (permute . There) e))
-subst1CC (Bnd v c)          e = Bnd v (subst1CC c (renameC (permute . There) e))
-
 stepV : Comp g a -> Maybe (Comp g a)
-stepV (App (Lam c) v)    = Just $ subst1VC v c
-stepV (If0  Zero    t f) = Just t
-stepV (If0 (Succ v) t f) = Just $ subst1VC v f
-stepV (Fix c)            = Just $ subst1CC (Fix c) c
-stepV (Bnd (Wrap c) d)   = Just $ subst1CC c d
-stepV  _                 = Nothing
+stepV (App (Lam c) v)      = Just $ subst1VC v c
+stepV (If0  Zero    t f)   = Just t
+stepV (If0 (Succ v) t f)   = Just $ subst1VC v f
+stepV (Bnd (Fix c) d)      = Just $ Bnd (Wrap $ subst1VC (Fix c) c) d
+stepV (Bnd (Wrap (V v)) d) = Just $ subst1VC v d
+stepV (Bnd (Wrap c) d)     = [| Bnd (Wrap <$> stepV c) (pure d) |]
+stepV  _                   = Nothing
 
 stepIterV : Comp g a -> (Nat, Comp g a)
 stepIterV = iterCount stepV

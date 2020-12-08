@@ -21,6 +21,7 @@ mutual
     Zero : Val g A
     Succ : Val g A -> Val g A
     Lam  : Comp (a::g) b -> Val g (a~>b)
+    Fix  : Comp (C a::g) a -> Val g (C a)
     Wrap : Comp g a -> Val g (C a)
 
   public export
@@ -28,7 +29,6 @@ mutual
     V   : Val g a -> Comp g a
     App : Val g (a~>b) -> Val g a -> Comp g b
     If0 : Val g A -> Comp g a -> Comp (A::g) a -> Comp g a
-    Fix : Comp (a::g) a -> Comp g a
     Bnd : Val g (C a) -> Comp (a::g) b -> Comp g b
 
 mutual
@@ -38,6 +38,7 @@ mutual
   renameV s  Zero    = Zero
   renameV s (Succ v) = Succ $ renameV s v
   renameV s (Lam c)  = Lam $ renameC (ext s) c
+  renameV s (Fix c)  = Fix $ renameC (ext s) c
   renameV s (Wrap c) = Wrap $ renameC s c
 
   export
@@ -45,12 +46,12 @@ mutual
   renameC s (V v)       = V $ renameV s v
   renameC s (App v u)   = App (renameV s v) (renameV s u)
   renameC s (If0 v t f) = If0 (renameV s v) (renameC s t) (renameC (ext s) f)
-  renameC s (Fix c)     = Fix $ renameC (ext s) c
   renameC s (Bnd v c)   = Bnd (renameV s v) (renameC (ext s) c)
 
 lt : Comp g a -> Comp (a::g) b -> Comp g b
 lt t u = Bnd (Wrap t) u
 
+export
 ap : Comp g (a~>b) -> Comp g a -> Comp g b
 ap t u = lt t $ lt (renameC There u) $ App (Var $ There Here) (Var Here)
 
@@ -67,24 +68,27 @@ id_idid : Comp g (A~>A)
 id_idid = ap (V $ Lam $ V $ Var Here) (ap (V $ Lam $ V $ Var Here) (V $ Lam $ V $ Var Here))
 
 export
-bam0 : Comp g A
-bam0 = Fix $ V $ Succ $ Var Here
+bam0 : Val g (C A)
+bam0 = Fix $ Bnd (Var Here) (V $ Succ $ Var Here)
 
 export
 bam : Comp g A
-bam = ap (V $ Lam $ V Zero) bam0
+bam = Bnd bam0 $ App (Lam $ V Zero) (Var Here)
 
+export
 fromN : Nat -> Val g A
 fromN  Z    = Zero
 fromN (S n) = Succ $ fromN n
 
-plusN : Comp g (A~>A~>A)
+export
+plusN : Val g (C (A~>A~>A))
 plusN = Fix $ V $ Lam $ V $ Lam $ If0 (Var $ There Here)
                                       (V $ Var Here)
-                                      (lt (App (Var $ There $ There $ There Here) (Var Here)) $
-                                       lt (App (Var Here) (Var $ There $ There Here)) $
-                                          (V $ Succ $ Var Here))
+                                      (Bnd (Var $ There $ There $ There Here) $
+                                       lt (App (Var Here) (Var $ There Here)) $
+                                       lt (App (Var Here) (Var $ There $ There $ There Here)) $
+                                       (V $ Succ $ Var Here))
 
 export
 plus32 : Comp g A
-plus32 = ap (ap plusN (V $ fromN 3)) (V $ fromN 2)
+plus32 = ap (Bnd plusN $ App (Var Here) (fromN 3)) (V $ fromN 2)
