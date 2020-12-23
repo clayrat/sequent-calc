@@ -1,7 +1,11 @@
-module Lambda.PCFV.Bigstep
+module Lambda.PCFV.Mod.Bigstep
 
+import Data.List
 import Data.List.Quantifiers
-import Lambda.PCFV.Term
+import Lambda.PCFV.Mod.Term
+import Lambda.PCFV.Mod.Ty
+
+import System
 
 %default total
 
@@ -15,6 +19,18 @@ mutual
     RC  : Res a -> Res (C a)
     RF  : Env g -> Comp (C a::g) a -> Res (C a)
     RCl : Env g -> Comp (a::g) b -> Res (a~>b)
+
+mutual
+  Show (Res a) where
+    show  RZ = "Z"
+    show (RS v) = "S" ++ show v
+    show (RC v) = "{" ++ show v ++ "}"
+    show (RF e t) = "<" ++ assert_total (showAll e) ++ ">: " ++ show t
+    show (RCl e t) = "{" ++ assert_total (showAll e) ++ "}: " ++ show t
+
+  showAll : All Res l -> String
+  showAll [] = ""
+  showAll (v::vs) = show v ++ " " ++ assert_total (showAll vs)
 
 mutual
   evalV : Val g a -> Env g -> Res a
@@ -37,3 +53,7 @@ mutual
                             RC r => evalC c (r :: env)
                             RF env' t => assert_total $
                                          evalC c (evalC t (RF env' t :: env') :: env)
+
+partial
+main : IO ()
+main = printLn $ evalC bam []

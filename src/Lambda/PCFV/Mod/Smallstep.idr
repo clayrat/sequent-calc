@@ -1,14 +1,15 @@
-module Lambda.PCFV.Smallstep
+module Lambda.PCFV.Mod.Smallstep
 
-import Data.List.Elem
+import Data.List
 import Subset
 import Iter
-import Lambda.PCFV.Term
+import Lambda.PCFV.Mod.Term
+import Lambda.PCFV.Mod.Ty
 
 %default total
 
 SubstV : List Ty -> List Ty -> Type
-SubstV g d = {0 x : Ty} -> Elem x g -> Val d x
+SubstV g d = {x : Ty} -> Elem x g -> Val d x
 
 extsV : SubstV g d -> SubstV (b::g) (b::d)
 extsV _  Here      = Var Here

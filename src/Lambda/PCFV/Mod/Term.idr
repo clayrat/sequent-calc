@@ -1,18 +1,11 @@
-module Lambda.PCFV.Term
+module Lambda.PCFV.Mod.Term
 
 import Data.List
-import Data.List.Elem
+import Elem
 import Subset
+import Lambda.PCFV.Mod.Ty
 
 %default total
-
-public export
-data Ty = A | Imp Ty Ty | C Ty
-
-infixr 5 ~>
-public export
-(~>) : Ty -> Ty -> Ty
-(~>) = Imp
 
 mutual
   public export
@@ -30,6 +23,23 @@ mutual
     App : Val g (a~>b) -> Val g a -> Comp g b
     If0 : Val g A -> Comp g a -> Comp (A::g) a -> Comp g a
     Bnd : Val g (C a) -> Comp (a::g) b -> Comp g b
+
+mutual
+  export
+  Show (Val g a) where
+    show (Var n)  = show $ elem2Nat n
+    show  Zero    = "Z"
+    show (Succ v) = "S" ++ show v
+    show (Lam c)  = "\\" ++ assert_total (show c)
+    show (Fix c)  = "FIX " ++ assert_total (show c)
+    show (Wrap c) = "{" ++ assert_total (show c) ++ "}"
+
+  export
+  Show (Comp g a) where
+    show (V v)       = "[" ++ show v ++ "]"
+    show (App t u)   = "(" ++ show t ++ ")(" ++ show u ++ ")"
+    show (If0 v t f) = "IFZ " ++ show v ++ " THEN " ++ show t ++ " ELSE " ++ show f
+    show (Bnd v c)   = "BIND " ++ show v ++ " IN " ++ show c
 
 mutual
   export
