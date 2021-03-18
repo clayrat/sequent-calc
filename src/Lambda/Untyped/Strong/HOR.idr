@@ -6,6 +6,8 @@ import Lambda.Untyped.Term
 %default total
 %access public export
 
+-- head-order reduction
+
 mutual
   Env : Type
   Env = List (Either Clos Nat)

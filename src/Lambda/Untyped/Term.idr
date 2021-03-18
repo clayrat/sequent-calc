@@ -32,21 +32,27 @@ if2 = Lam $ Lam $ Lam $ App (App (Var 2) (Var 0)) (Var 1)
 
 -- Scott encodings
 
+export
 zero : Term
 zero = Lam $ Lam $ Var 1
 
+export
 succ : Term
 succ = Lam $ Lam $ Lam $ App (Var 0) (Var 2)
 
+export
 pred : Term
 pred = Lam $ App (App (Var 0) zero) (Lam $ Var 0)
 
+export
 one : Term
 one = App succ zero
 
+export
 two : Term
 two = App succ one
 
+export
 three : Term
 three = App succ two
 
@@ -94,12 +100,15 @@ n6 = App (App add three) three
 
 -- Church encodings
 
+export
 zero' : Term
 zero' = Lam $ Lam $ Var 0
 
+export
 one' : Term
 one' = Lam $ Lam $ App (Var 1) (Var 0)
 
+export
 succ' : Term
 succ' = Lam $ Lam $ Lam $ App (Var 1) (App (App (Var 2) (Var 1)) (Var 0))
 
@@ -117,3 +126,13 @@ notCBV = Lam $ Lam $ Lam $ App (App (Var 2) (Var 0)) (Var 1)
 
 notCBN : Term
 notCBN = Lam $ App (App (Var 0) false') true'
+
+-- strong reduction tests
+
+export
+strTest : Term
+strTest = App (Lam $ Lam $ Lam $ App (Var 2) (Var 1)) (Lam $ App (Var 0) (Var 0))
+
+export
+strTest2 : Term
+strTest2 = Lam $ App (Var 0) (App (Lam $ Var 0) (App (Lam $ Var 0) (Var 0)))
