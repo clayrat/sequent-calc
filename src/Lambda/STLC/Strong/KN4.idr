@@ -34,24 +34,24 @@ data State : Ty -> Type where
   Done  : Term [] a -> State a
 
 step : State z -> Maybe (State z)
-step (More1 (App t u)            e  s m) = Just $ More1 t            e (C u e m s)     m
-step (More1 (Lam t)              e  s m) = Just $ More3 s t e m
-step (More1 (Var (There el))      (_::e) s m) = Just $ More1 (Var el)      e          s      m
-step (More1 (Var  Here)      (Lv n::_) s m) = Just $ More2 s (Var ?wat) --minus m n
-step (More1 (Var  Here)    (Cl t e::_) s m) = Just $ More1 t            e          s      m
+step (More1 (App t u)                 e  s m) = Just $ More1 t            e (C u e m s)     m
+step (More1 (Lam t)                   e  s m) = Just $ More3 s t e m
+step (More1 (Var (There el))      (_::e) s m) = Just $ More1 (Var el)     e          s      m
+step (More1 (Var  Here)        (Lv n::_) s m) = Just $ More2 s (Var ?wat) --minus m n
+step (More1 (Var  Here)      (Cl t e::_) s m) = Just $ More1 t            e          s      m
 --step (More1 (Var  el)            []  s m) = Just $ More2 s (Var $ n+m) -- not gonna work like this: Elem el []
 
-step (More2 (M ms)      a)               = Just $ More4 ms a
-step (More2 (C t e m s) a)               = Just $ More1 t            e (M (TM a s))    m
+step (More2 (M ms)      a)                    = Just $ More4 ms a
+step (More2 (C t e m s) a)                    = Just $ More1 t            e (M (TM a s))    m
 
-step (More3 (M ms)        t e m)         = Just $ More1 t (Lv (S m)::e)  (M (L ms)) (S m)
-step (More3 (C t1 e1 _ s) t e m)         = Just $ More1 t (Cl t1 e1::e)         s      m
+step (More3 (M ms)        t e m)              = Just $ More1 t (Lv (S m)::e)  (M (L ms)) (S m)
+step (More3 (C t1 e1 _ s) t e m)              = Just $ More1 t (Cl t1 e1::e)         s      m
 
-step (More4 Mt       t )                 = Just $ Done t
-step (More4 (L s)    t )                 = Just $ More4 s (Lam t)
-step (More4 (TM a s) t )                 = Just $ More2 s (App a t)
+step (More4 Mt       t )                      = Just $ Done t
+step (More4 (L s)    t )                      = Just $ More4 s (Lam t)
+step (More4 (TM a s) t )                      = Just $ More2 s (App a t)
 
-step  _                                  = Nothing
+step  _                                       = Nothing
 
 init : Term [] a -> State a
 init t = More1 t [] (M Mt) Z
